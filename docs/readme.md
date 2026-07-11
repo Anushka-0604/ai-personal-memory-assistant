@@ -47,3 +47,34 @@ Coming Soon
 ## Last Updated
 
 Phase 1 – Project Setup
+
+# Current Progress
+
+## Phase 1
+
+✅ Project Initialization
+
+---
+
+## Phase 2
+
+✅ User Authentication
+
+Completed:
+
+- PostgreSQL
+- SQLAlchemy
+- Alembic
+- User Model
+- Registration
+- Login
+- JWT Authentication
+- Protected Routes
+
+---
+
+## Next
+
+Phase 3
+
+AI Memory Engine

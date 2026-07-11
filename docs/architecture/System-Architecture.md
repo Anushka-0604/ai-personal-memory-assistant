@@ -166,3 +166,34 @@ Production (Planned):
 - Calendar integration
 - Email integration
 - Local LLM support
+
+---
+
+# Authentication Layer
+
+```
+Client
+        │
+        ▼
+FastAPI Routes
+        │
+        ▼
+Authentication Service
+        │
+        ▼
+JWT Verification
+        │
+        ▼
+PostgreSQL Database
+```
+
+---
+
+## Authentication Components
+
+- JWT Token Generation
+- Password Hashing (bcrypt)
+- User Authentication
+- Protected Endpoints
+- SQLAlchemy ORM
+- Alembic Database Migrations
