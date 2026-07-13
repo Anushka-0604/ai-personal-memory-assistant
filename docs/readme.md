@@ -1,8 +1,8 @@
 # Documentation
 
-Welcome to the documentation of the **AI Personal Memory & Decision Assistant**.
+Welcome to the documentation for the **AI Personal Memory & Decision Assistant**.
 
-This folder contains all technical documentation related to the project.
+This directory contains the complete technical documentation for the project, including architecture, APIs, database design, authentication, and development phases.
 
 ---
 
@@ -10,7 +10,9 @@ This folder contains all technical documentation related to the project.
 
 ## Project Phases
 
-- Phase 01 – Project Setup
+- Phase 1 – Project Setup
+- Phase 2 – Backend Foundation & Authentication
+- Phase 3 – Memory Engine
 
 ---
 
@@ -22,59 +24,81 @@ This folder contains all technical documentation related to the project.
 
 ## API Documentation
 
-Coming Soon
+- Authentication
+- Phase 2 APIs
+- Phase 3 APIs
 
 ---
 
-## Database Design
+## Database
 
-Coming Soon
-
----
-
-## AI Pipeline
-
-Coming Soon
+- Database Schema
+- Alembic Migration History
 
 ---
 
-## Deployment
+## Current Project Status
 
-Coming Soon
+### ✅ Phase 1 – Project Setup
 
----
+Completed
 
-## Last Updated
-
-Phase 1 – Project Setup
-
-# Current Progress
-
-## Phase 1
-
-✅ Project Initialization
+- Project Initialization
+- Virtual Environment
+- FastAPI Setup
+- Git & GitHub
+- Folder Structure
+- Configuration Management
 
 ---
 
-## Phase 2
+### ✅ Phase 2 – Backend Foundation & Authentication
 
-✅ User Authentication
+Completed
 
-Completed:
-
-- PostgreSQL
-- SQLAlchemy
-- Alembic
+- PostgreSQL Integration
+- SQLAlchemy ORM
+- Alembic Migrations
 - User Model
-- Registration
-- Login
+- User Registration
+- User Login
+- Password Hashing (bcrypt)
 - JWT Authentication
-- Protected Routes
+- OAuth2PasswordBearer
+- Protected APIs
 
 ---
 
-## Next
+### ✅ Phase 3 – Memory Engine
 
-Phase 3
+Completed
 
-AI Memory Engine
+- Memory Model
+- User-Memory Relationship
+- Memory Schemas
+- Memory Service
+- Memory CRUD APIs
+- JWT Protected Memory Endpoints
+- Swagger API Testing
+- PostgreSQL Verification
+
+---
+
+# Next Phase
+
+## 🚀 Phase 4 – AI Memory Engine
+
+Planned Features
+
+- pgvector Integration
+- Vector Embeddings
+- Semantic Search
+- Retrieval-Augmented Generation (RAG)
+- OpenAI / Gemini Integration
+- Personalized AI Responses
+
+---
+
+# Last Updated
+
+**Phase 3 – Memory Engine**

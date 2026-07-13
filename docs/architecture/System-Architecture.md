@@ -2,198 +2,248 @@
 
 ## Overview
 
-The AI Personal Memory & Decision Assistant is a production-level AI application designed to act as a secure digital second brain. The system allows users to upload, organize, search, and interact with their personal knowledge using modern Artificial Intelligence techniques.
+The AI Personal Memory & Decision Assistant is a production-level AI application designed to act as a secure digital second brain.
 
-The application follows a modular microservice-inspired architecture to ensure scalability, maintainability, and security.
+The system follows a layered architecture to ensure scalability, maintainability, and clean separation of concerns.
 
 ---
 
-# High-Level Architecture
+# Current Architecture (Phase 3)
 
 ```
-                        User
-                          │
-                          ▼
-                React Frontend (TypeScript)
-                          │
-                    REST API / HTTPS
-                          │
-                          ▼
-                FastAPI Backend (Python)
-                          │
-      ┌─────────────┬──────────────┬───────────────┐
-      │             │              │               │
-      ▼             ▼              ▼               ▼
- PostgreSQL      Qdrant         Neo4j          File Storage
-(User Data)   (Embeddings)  (Knowledge Graph) (Documents)
-
-                          │
-                          ▼
-                Large Language Model (LLM)
+                    User
+                      │
+                      ▼
+             FastAPI Backend
+                      │
+        ┌─────────────┴─────────────┐
+        ▼                           ▼
+ Authentication              Memory Service
+        │                           │
+        ▼                           ▼
+ JWT Verification           CRUD Operations
+        │                           │
+        └─────────────┬─────────────┘
+                      ▼
+               SQLAlchemy ORM
+                      │
+                      ▼
+                 PostgreSQL
 ```
 
 ---
 
-# Major Components
+# Backend Layered Architecture
 
-## Frontend
+```
+Client
 
-Technology:
-- React
-- TypeScript
-- Tailwind CSS
+↓
 
-Responsibilities:
+API Routes
 
-- User Authentication
-- Dashboard
-- Chat Interface
-- Document Upload
-- Settings
-- User Profile
+↓
 
----
+Services
 
-## Backend
+↓
 
-Technology:
+Database Layer
 
-- Python
-- FastAPI
+↓
 
-Responsibilities:
-
-- Authentication
-- API Development
-- AI Integration
-- Document Processing
-- Database Communication
-- File Management
+PostgreSQL
+```
 
 ---
 
-## PostgreSQL
+# Backend Components
 
-Stores:
-
-- User Accounts
-- Chat History
-- Metadata
-- Document Information
-- Application Settings
-
----
-
-## Qdrant
-
-Stores:
-
-- Vector Embeddings
-- Semantic Representations
-- Search Index
-
-Used for:
-
-- Semantic Search
-- Retrieval-Augmented Generation (RAG)
-
----
-
-## Neo4j
-
-Stores:
-
-- Entities
-- Relationships
-- Knowledge Graph
-
-Used for:
-
-- Context Discovery
-- Relationship Analysis
-- Connected Knowledge
-
----
-
-## Large Language Model (LLM)
+## API Layer
 
 Responsible for:
 
-- Question Answering
-- Summarization
-- Decision Support
-- Context-Aware Responses
+- HTTP Endpoints
+- Request Validation
+- Response Models
+- Dependency Injection
 
 ---
 
-# Data Flow
+## Authentication Layer
 
-1. User uploads a document.
-2. Backend extracts the document text.
-3. Text is divided into chunks.
-4. Embeddings are generated.
-5. Embeddings are stored in Qdrant.
-6. Metadata is stored in PostgreSQL.
-7. Relationships are stored in Neo4j.
-8. During chat, relevant information is retrieved.
-9. The LLM generates a context-aware response.
+Responsible for:
+
+- User Registration
+- User Login
+- JWT Authentication
+- OAuth2PasswordBearer
+- Protected Endpoints
+
+---
+
+## Service Layer
+
+Responsible for business logic.
+
+Current Services
+
+- Authentication
+- Memory CRUD Operations
+
+---
+
+## Database Layer
+
+Technology
+
+- PostgreSQL
+- SQLAlchemy ORM
+- Alembic
+
+Responsible for
+
+- User Data
+- Memory Storage
+- Database Relationships
+
+---
+
+# Current Database Schema
+
+```
+users
+
+│
+
+└───────┐
+
+        ▼
+
+memories
+```
+
+Relationship
+
+One User
+
+↓
+
+Many Memories
+
+---
+
+# Request Flow
+
+```
+Client
+
+↓
+
+FastAPI Route
+
+↓
+
+Authentication
+
+↓
+
+Memory Service
+
+↓
+
+SQLAlchemy ORM
+
+↓
+
+PostgreSQL
+
+↓
+
+Response
+```
+
+---
+
+# Current Features
+
+Implemented
+
+- JWT Authentication
+- OAuth2 Authorization
+- User Registration
+- User Login
+- Memory CRUD APIs
+- SQLAlchemy ORM
+- Alembic Migrations
+- Swagger Documentation
+
+---
+
+# Future AI Architecture
+
+```
+                React Frontend
+                       │
+                       ▼
+                FastAPI Backend
+                       │
+      ┌────────────────┼────────────────┐
+      ▼                ▼                ▼
+ Authentication   Memory Service   AI Service
+      │                │                │
+      ▼                ▼                ▼
+ PostgreSQL      PostgreSQL      Embeddings
+      │                │                │
+      └──────────────► pgvector ◄──────┘
+                            │
+                            ▼
+                    Semantic Search
+                            │
+                            ▼
+                    OpenAI / Gemini
+                            │
+                            ▼
+                Personalized Response
+```
+
+---
+
+# Future Components
+
+Planned Features
+
+- pgvector
+- Vector Embeddings
+- Semantic Search
+- Retrieval-Augmented Generation (RAG)
+- OpenAI / Gemini
+- Voice Assistant
+- Whisper
+- WebRTC
+- Document Processing
+- Image Memories
+- Memory Timeline
+- Knowledge Graph
+- Decision Support
 
 ---
 
 # Deployment
 
-Development:
+## Development
 
 - Windows 11
-- Docker Desktop
+- Python
+- FastAPI
 - PostgreSQL
 - VS Code
 
-Production (Planned):
+## Production (Planned)
 
-- AWS
+- React
 - Docker
+- AWS
 - HTTPS
-- Cloud Storage
-
----
-
-# Future Enhancements
-
-- Multi-user collaboration
-- Voice interaction
-- Mobile application
-- Calendar integration
-- Email integration
-- Local LLM support
-
----
-
-# Authentication Layer
-
-```
-Client
-        │
-        ▼
-FastAPI Routes
-        │
-        ▼
-Authentication Service
-        │
-        ▼
-JWT Verification
-        │
-        ▼
-PostgreSQL Database
-```
-
----
-
-## Authentication Components
-
-- JWT Token Generation
-- Password Hashing (bcrypt)
-- User Authentication
-- Protected Endpoints
-- SQLAlchemy ORM
-- Alembic Database Migrations
+- pgvector
+- OpenAI/Gemini

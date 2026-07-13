@@ -1,14 +1,20 @@
 # Alembic Migration History
 
-## Migration 1
+This document records all database schema changes managed using Alembic.
 
-Create users table
+---
 
-Created:
+# Migration 1
 
-- users table
+## Name
 
-Columns:
+Create Users Table
+
+### Description
+
+Created the initial `users` table.
+
+### Columns Added
 
 - id
 - name
@@ -16,20 +22,115 @@ Columns:
 
 ---
 
-## Migration 2
+# Migration 2
 
-Added:
+## Name
+
+Add Hashed Password
+
+### Description
+
+Added secure password storage to the users table.
+
+### Columns Added
 
 - hashed_password
 
 ---
 
-Database Version
+# Migration 3
 
-Current migration:
+## Name
 
+Create Memories Table
+
+### Description
+
+Introduced the Memory Engine database structure.
+
+Created the `memories` table and established a relationship with the `users` table.
+
+### Columns Added
+
+- id
+- user_id
+- content
+- source
+- created_at
+- updated_at
+
+### Foreign Key
+
+```
+user_id
+    ↓
+users.id
+```
+
+### Relationship
+
+```
+One User
+
+↓
+
+Many Memories
+```
+
+---
+
+# Current Database Version
+
+Current Migration
+
+```
 head
+```
 
-Status:
+Status
 
+```
 Up to date
+```
+
+---
+
+# Migration Workflow
+
+Whenever the database schema changes:
+
+```
+Update SQLAlchemy Models
+
+↓
+
+Generate Alembic Migration
+
+↓
+
+Review Migration File
+
+↓
+
+Run
+
+alembic upgrade head
+
+↓
+
+Verify Changes in PostgreSQL
+```
+
+---
+
+# Next Planned Migration
+
+Phase 4
+
+The next migration will introduce support for semantic search by adding an embedding column to the memories table.
+
+Planned changes:
+
+- Enable pgvector extension
+- Add embedding column
+- Create vector index
