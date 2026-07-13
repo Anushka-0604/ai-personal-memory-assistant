@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from pathlib import Path
 from dotenv import load_dotenv
+from app.models.memory import Memory
 import os
 
 from alembic import context

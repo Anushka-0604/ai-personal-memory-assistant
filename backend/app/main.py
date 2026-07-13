@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+from . import models
 from fastapi import FastAPI
 
 from .api.routes import router
