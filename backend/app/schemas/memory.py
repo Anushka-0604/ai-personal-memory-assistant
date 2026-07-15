@@ -22,3 +22,21 @@ class MemoryResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================
+# Semantic Search Schemas
+# ==========================
+
+class MemorySearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+
+class MemorySearchResult(BaseModel):
+    id: int
+    content: str
+    source: str
+    similarity: float
+
+    model_config = ConfigDict(from_attributes=True)

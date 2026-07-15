@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -27,6 +28,12 @@ class Memory(Base):
         String(50),
         default="chat",
         nullable=False,
+    )
+
+    # AI embedding (384-dimensional vector)
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(384),
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

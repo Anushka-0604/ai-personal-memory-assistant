@@ -2,13 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ..models.memory import Memory
-from ..schemas.memory import MemoryCreate, MemoryResponse, MemoryUpdate
+from ..schemas.memory import (
+    MemoryCreate,
+    MemoryResponse,
+    MemoryUpdate,
+    MemorySearchRequest,
+    MemorySearchResult,
+)
 from ..services.memory_service import (
     create_memory,
     get_memories,
     get_memory_by_id,
     update_memory,
     delete_memory,
+    search_memories,
 )
 
 from ..core.security import (
@@ -183,6 +190,21 @@ def update_existing_memory(
         db=db,
         memory=memory,
         memory_update=memory_update,
+    )
+@router.post(
+    "/memories/search",
+    response_model=list[MemorySearchResult],
+)
+def semantic_search(
+    request: MemorySearchRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return search_memories(
+        db=db,
+        user_id=current_user.id,
+        query=request.query,
+        top_k=request.top_k,
     )
 @router.delete(
     "/memories/{memory_id}",
