@@ -12,7 +12,10 @@ MODEL_NAME = os.getenv(
 
 print(f"Loading embedding model: {MODEL_NAME}")
 
-model = SentenceTransformer(MODEL_NAME)
+model = SentenceTransformer(
+    MODEL_NAME,
+    local_files_only=True,
+)
 
 print("Embedding model loaded successfully!")
 
@@ -21,5 +24,8 @@ def generate_embedding(text: str) -> list[float]:
     """
     Generate a vector embedding for the given text.
     """
-    embedding = model.encode(text, convert_to_numpy=True)
+    embedding = model.encode(
+        text,
+        convert_to_numpy=True,
+    )
     return embedding.tolist()

@@ -30,8 +30,10 @@ from ..schemas.user import (
     TokenResponse,
     UserCreate,
 )
-
+from ..schemas.chat import ChatRequest, ChatResponse
+from ..services.chat_service import ChatService
 router = APIRouter()
+chat_service = ChatService()
 
 
 @router.get("/")
@@ -230,4 +232,20 @@ def delete_existing_memory(
     delete_memory(
         db=db,
         memory=memory,
+    )
+
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+)
+def chat(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return chat_service.chat(
+        db=db,
+        user_id=current_user.id,
+        question=request.question,
+        top_k=request.top_k,
     )

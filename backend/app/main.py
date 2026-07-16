@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
-from . import models
 from fastapi import FastAPI
 
+from . import models
 from .api.routes import router
 from .core.config import PROJECT_NAME
 from .database.connection import test_connection
