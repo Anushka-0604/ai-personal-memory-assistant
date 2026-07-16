@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
@@ -85,6 +84,7 @@ def search_memories(
         .all()
     )
 
+    
     return [
         {
             "id": memory.id,

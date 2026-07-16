@@ -21,7 +21,7 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
-
+        # Retrieve relevant memories
         memories = search_memories(
             db=db,
             user_id=user_id,
@@ -29,30 +29,36 @@ class ChatService:
             top_k=top_k,
         )
 
-        # Keep only relevant memories
+        # Keep only memories above the similarity threshold
         filtered_memories = [
             memory
             for memory in memories
             if memory["similarity"] >= RAG_SIMILARITY_THRESHOLD
         ]
 
+        # If no relevant memories are found, return immediately
+        if not filtered_memories:
+            return {
+                "answer": (
+                    "I couldn't find any relevant memories "
+                    "to answer your question."
+                ),
+                "retrieved_memories": [],
+            }
+
+        # Extract memory texts for prompt construction
         memory_texts = [
             memory["content"]
             for memory in filtered_memories
         ]
 
-        # No relevant memories found
-        if not memory_texts:
-            return {
-                "answer": "I couldn't find any relevant memories to answer your question.",
-                "retrieved_memories": [],
-            }
-
+        # Build the RAG prompt
         prompt = PromptBuilder.build_prompt(
             user_question=question,
             memories=memory_texts,
         )
 
+        # Generate response from the LLM
         answer = self.llm_service.generate_response(prompt)
 
         return {

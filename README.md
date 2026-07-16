@@ -2,9 +2,9 @@
 
 A production-level AI-powered **Personal Memory & Decision Assistant** that acts as a secure digital **"Second Brain"** for users.
 
-The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Semantic Search**, and, in future phases, **Large Language Models (LLMs)** and **Retrieval-Augmented Generation (RAG)**.
+The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Semantic Search**, and **Retrieval-Augmented Generation (RAG)** powered by **Google Gemini**.
 
-The project is being developed incrementally following production software engineering practices, with each phase introducing new architectural capabilities while maintaining modularity and scalability.
+The project is being developed incrementally following production software engineering practices, with each phase introducing new architectural capabilities while maintaining modularity, scalability, and clean software design.
 
 ---
 
@@ -132,7 +132,43 @@ The project is being developed incrementally following production software engin
 - Semantic Memory Retrieval
 - Meaning-based Search
 - Vector Similarity Search
-- AI Retrieval Layer (RAG Foundation)
+- Retrieval Foundation
+
+---
+
+## ✅ Phase 5 – Retrieval-Augmented Generation (RAG)
+
+**Status:** Completed
+
+### Large Language Model
+
+- Google Gemini Integration
+- Gemini API
+- LLM Service
+- Prompt Engineering
+
+### Retrieval-Augmented Generation
+
+- Query Embedding Generation
+- Semantic Vector Search
+- Top-K Memory Retrieval
+- Similarity Threshold Filtering
+- Prompt Builder
+- Context Construction
+- Memory-Grounded Responses
+
+### AI Chat
+
+- Protected Chat Endpoint
+- Chat Service
+- AI Question Answering
+- Personalized Responses
+
+### Reliability
+
+- Logging
+- Graceful Gemini Error Handling
+- Modular AI Services
 
 ---
 
@@ -163,9 +199,17 @@ The project is being developed incrementally following production software engin
 
 ---
 
-## Machine Learning
+## Artificial Intelligence
 
 - Sentence Transformers
+- all-MiniLM-L6-v2
+- Google Gemini API
+- Retrieval-Augmented Generation (RAG)
+
+---
+
+## Machine Learning
+
 - PyTorch
 - Transformers
 - NumPy
@@ -184,7 +228,6 @@ The project is being developed incrementally following production software engin
 
 ## Future AI Stack
 
-- OpenAI API / Gemini API
 - LangChain
 - LlamaIndex
 - Whisper
@@ -213,7 +256,7 @@ AI-Personal-Memory-Assistant/
 │   │
 │   ├── alembic/
 │   ├── tests/
-│   ├── .env
+│   ├── .env.example
 │   └── requirements.txt
 │
 ├── frontend/
@@ -256,6 +299,14 @@ AI-Personal-Memory-Assistant/
 
 ---
 
+## AI APIs
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/chat` | AI Chat using Retrieval-Augmented Generation |
+
+---
+
 # ✨ Current Features
 
 ## Authentication
@@ -273,6 +324,7 @@ AI-Personal-Memory-Assistant/
 - SQLAlchemy ORM
 - Alembic Migrations
 - Relational Data Modeling
+- pgvector Integration
 
 ---
 
@@ -280,25 +332,29 @@ AI-Personal-Memory-Assistant/
 
 - Memory CRUD
 - User-specific Storage
-- Service Layer Architecture
+- Automatic Embedding Generation
+- Automatic Embedding Updates
 
 ---
 
 ## Artificial Intelligence
 
 - Sentence Embeddings
-- Automatic Embedding Generation
-- Vector Database Integration
 - Semantic Search
 - Cosine Similarity Search
-- Meaning-based Memory Retrieval
+- Vector Database
+- Retrieval-Augmented Generation (RAG)
+- Prompt Builder
+- Google Gemini Integration
+- AI Chat
+- Memory-Grounded Responses
 
 ---
 
 # 🏗 Current System Architecture
 
 ```text
-Frontend
+User
 
 ↓
 
@@ -310,7 +366,7 @@ Authentication
 
 ↓
 
-Business Logic
+Chat Service
 
 ↓
 
@@ -318,19 +374,19 @@ Embedding Service
 
 ↓
 
-Sentence Transformer
+Semantic Search (pgvector)
 
 ↓
 
-384-Dimensional Embeddings
+Prompt Builder
 
 ↓
 
-PostgreSQL + pgvector
+Google Gemini
 
 ↓
 
-Semantic Search
+AI Response
 ```
 
 ---
@@ -343,23 +399,24 @@ Semantic Search
 | Phase 2 – Backend Foundation & Authentication | ✅ Completed |
 | Phase 3 – Memory Engine | ✅ Completed |
 | Phase 4 – AI Memory Engine & Semantic Search | ✅ Completed |
-| Phase 5 – LLM Integration & Retrieval-Augmented Generation | 🔄 Next |
-| Phase 6 – Long-Term Memory & Context Management | ⏳ Planned |
-| Phase 7 – Decision Intelligence Engine | ⏳ Planned |
-| Phase 8 – Production Deployment & Scaling | ⏳ Planned |
+| Phase 5 – Retrieval-Augmented Generation (RAG) | ✅ Completed |
+| Phase 6 – Conversational Memory & Automatic Memory Extraction | 🚀 Next |
+| Phase 7 – Context Management & Memory Optimization | ⏳ Planned |
+| Phase 8 – Decision Intelligence Engine | ⏳ Planned |
+| Phase 9 – Production Deployment & Multi-modal AI | ⏳ Planned |
 
 ---
 
-# 🎯 Upcoming Features (Phase 5)
+# 🎯 Upcoming Features (Phase 6)
 
-- OpenAI / Gemini Integration
-- Retrieval-Augmented Generation (RAG)
-- Prompt Engineering
-- Conversational AI
-- Context Builder
-- Personalized AI Responses
-- AI Chat Endpoint
-- Intelligent Memory Retrieval
+- Conversation History
+- Automatic Memory Extraction
+- Session-Based Conversations
+- Short-Term Conversational Memory
+- Combined Short-Term and Long-Term Memory
+- Multi-turn AI Conversations
+- Automatic Memory Saving
+- Improved Context Management
 
 ---
 
@@ -375,7 +432,7 @@ Documentation includes:
 - API Documentation
 - Database Documentation
 - Vector Database Design
-- Semantic Search Pipeline
+- RAG Pipeline
 - System Diagrams
 
 ---
@@ -391,10 +448,11 @@ This project is being developed as a **production-quality AI SaaS application** 
 - Machine Learning
 - Vector Databases
 - Retrieval-Augmented Generation (RAG)
+- Large Language Models (LLMs)
 - Production Architecture
 - Cloud-ready Development
 
-The long-term vision is to build an intelligent personal assistant capable of understanding, remembering, and reasoning over a user's personal knowledge in a secure and scalable manner.
+The long-term vision is to build an intelligent personal assistant capable of understanding, remembering, reasoning, and making context-aware decisions using a combination of long-term semantic memory, conversational memory, and modern AI technologies.
 
 ---
 

@@ -4,26 +4,31 @@
 
 **Module:** Artificial Intelligence
 
-**Architecture Version:** v0.4.0
+**Architecture Version:** v0.5.0
 
-**Last Updated:** After Phase 4
+**Last Updated:** After Phase 5
 
 ---
 
 # Overview
 
-The Artificial Intelligence layer is responsible for enabling semantic understanding and intelligent retrieval of user memories.
+The Artificial Intelligence layer is responsible for enabling semantic understanding, intelligent retrieval, and AI-powered response generation using the user's stored memories.
 
 Unlike traditional applications that rely on exact keyword matching, the AI layer converts every memory into a dense numerical representation called an **embedding**. These embeddings capture the semantic meaning of the stored information, allowing the application to retrieve memories based on intent and context rather than exact wording.
 
-At the end of Phase 4, the AI subsystem consists of:
+At the end of Phase 5, the AI subsystem consists of:
 
 - Embedding Generation
 - Vector Storage
 - Semantic Search
 - Retrieval Engine
+- Prompt Builder
+- Retrieval-Augmented Generation (RAG)
+- Gemini LLM Integration
 
-Future phases will extend this architecture by integrating Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), decision-making modules, and long-term memory management.
+The retrieval engine is now connected to a Large Language Model through a Retrieval-Augmented Generation (RAG) pipeline, enabling the assistant to generate personalized, memory-grounded responses.
+
+Future phases will extend this architecture with conversational memory, automatic memory extraction, context management, and intelligent decision-making.
 
 ---
 
@@ -60,43 +65,59 @@ Future phases will extend this architecture by integrating Large Language Models
 
                      ▼
 
-          Semantic Retrieval
+         Top-K Memory Retrieval
 
                      │
 
                      ▼
 
-         Relevant Memories
+            Prompt Builder
+
+                     │
+
+                     ▼
+
+              Gemini LLM
+
+                     │
+
+                     ▼
+
+          AI Generated Response
 ```
 
 ---
 
 # AI Pipeline
 
-The AI pipeline transforms human language into machine-understandable vector representations.
+The AI pipeline transforms human language into intelligent, grounded responses using Retrieval-Augmented Generation.
 
 ```
-Text
+User Question
 
 ↓
 
-Sentence Transformer
+Generate Query Embedding
 
 ↓
 
-Embedding
+Semantic Vector Search
 
 ↓
 
-Vector Database
+Top-K Relevant Memories
 
 ↓
 
-Similarity Search
+Prompt Builder
 
 ↓
 
-Relevant Memories
+Gemini LLM
+
+↓
+
+AI Generated Response
 ```
 
 ---
@@ -170,6 +191,64 @@ Advantages
 
 ---
 
+## 3. Prompt Builder
+
+Location
+
+```
+backend/app/services/prompt_builder.py
+```
+
+Responsibilities
+
+- Construct structured prompts
+- Combine retrieved memories
+- Add system instructions
+- Include the user's current question
+
+The Prompt Builder ensures that the Large Language Model receives sufficient context to generate grounded and personalized responses.
+
+---
+
+## 4. LLM Service
+
+Location
+
+```
+backend/app/services/llm_service.py
+```
+
+Responsibilities
+
+- Communicate with the Gemini API
+- Submit prompts
+- Receive generated responses
+- Handle API failures gracefully
+
+The LLM Service abstracts all communication with the external language model, keeping business logic independent of the chosen provider.
+
+---
+
+## 5. Chat Service
+
+Location
+
+```
+backend/app/services/chat_service.py
+```
+
+Responsibilities
+
+- Perform semantic retrieval
+- Filter relevant memories
+- Construct prompts
+- Invoke the LLM
+- Return the final AI response
+
+The Chat Service orchestrates the complete Retrieval-Augmented Generation pipeline.
+
+---
+
 # Embedding Generation Workflow
 
 ```
@@ -208,16 +287,15 @@ Output
 
 ```
 [-0.0803,
- 0.0895,
- ...
- 384 floating point values]
+0.0895,
+...
+384 floating point values]
 ```
-
 ---
 
 # Storage Layer
 
-Generated embeddings are stored inside PostgreSQL using pgvector.
+Generated embeddings are stored inside PostgreSQL using the **pgvector** extension.
 
 Database
 
@@ -237,7 +315,7 @@ Schema
 embedding VECTOR(384)
 ```
 
-This enables SQL queries to perform semantic similarity search.
+This enables SQL queries to perform semantic similarity search directly inside the database.
 
 ---
 
@@ -267,7 +345,7 @@ No additional user interaction is required.
 
 # Automatic Embedding Updates
 
-Whenever a memory changes:
+Whenever a memory is updated:
 
 ```
 PUT /memories/{id}
@@ -281,18 +359,18 @@ Generate New Embedding
 Replace Previous Vector
 ```
 
-This ensures that embeddings always reflect the latest memory content.
+This guarantees that stored embeddings always represent the latest version of the memory.
 
 ---
 
 # Semantic Search Engine
 
-Instead of keyword matching, the AI layer performs vector similarity search.
+Instead of performing keyword matching, the AI subsystem performs semantic similarity search.
 
 Workflow
 
 ```
-User Query
+User Question
 
 ↓
 
@@ -300,7 +378,7 @@ Generate Query Embedding
 
 ↓
 
-Cosine Similarity
+Cosine Similarity Search
 
 ↓
 
@@ -308,8 +386,10 @@ Nearest Embeddings
 
 ↓
 
-Top-K Memories
+Top-K Relevant Memories
 ```
+
+Each retrieved memory is assigned a similarity score, allowing the assistant to identify the most relevant context.
 
 ---
 
@@ -323,7 +403,7 @@ Cosine Similarity
 
 Reason
 
-Cosine similarity compares the orientation of vectors rather than their magnitude, making it highly effective for sentence embeddings.
+Cosine similarity compares the orientation of vectors instead of their magnitude, making it highly effective for sentence embeddings.
 
 Similarity
 
@@ -342,8 +422,110 @@ Similarity
 
 ↓
 
-Unrelated meaning
+Completely unrelated meaning
 ```
+
+---
+
+# Retrieval-Augmented Generation (RAG)
+
+Phase 5 introduces Retrieval-Augmented Generation.
+
+Instead of generating answers solely from the Large Language Model's pretrained knowledge, the assistant first retrieves relevant memories from the semantic database.
+
+These retrieved memories become the context supplied to the LLM.
+
+Benefits
+
+- Personalized responses
+- Reduced hallucinations
+- Memory-grounded answers
+- Better factual consistency
+- Explainable retrieval process
+
+---
+
+# RAG Pipeline
+
+```
+User Question
+
+↓
+
+Generate Query Embedding
+
+↓
+
+Semantic Vector Search
+
+↓
+
+Top-K Relevant Memories
+
+↓
+
+Similarity Threshold Filter
+
+↓
+
+Prompt Builder
+
+↓
+
+Gemini LLM
+
+↓
+
+AI Generated Response
+```
+
+---
+
+# Prompt Construction
+
+The Prompt Builder creates structured prompts using:
+
+- System instructions
+- Retrieved memories
+- User question
+
+Example
+
+```
+System:
+You are an AI Personal Memory Assistant.
+
+Relevant Memories:
+- I have an interview tomorrow at 10 AM.
+
+Question:
+What do I have tomorrow?
+
+Answer:
+```
+
+Providing structured context helps the LLM generate accurate and grounded responses.
+
+---
+
+# LLM Integration
+
+The assistant currently integrates with:
+
+```
+Google Gemini
+```
+
+Responsibilities
+
+- Prompt submission
+- Response generation
+- Error handling
+- API abstraction
+
+The rest of the backend remains independent of the chosen LLM provider.
+
+Future LLMs (such as OpenAI or local models) can be integrated with minimal changes.
 
 ---
 
@@ -367,9 +549,19 @@ Top-K Retrieval
 ↓
 
 Relevant Memories
-```
 
-At the end of Phase 4, the pipeline stops after retrieving the most relevant memories.
+↓
+
+Prompt Builder
+
+↓
+
+Gemini LLM
+
+↓
+
+AI Response
+```
 
 ---
 
@@ -382,37 +574,35 @@ At the end of Phase 4, the pipeline stops after retrieving the most relevant mem
 
                    ▼
 
-           Memory Service
+             Chat Service
+
+                   │
+
+         ┌─────────┴─────────┐
+
+         ▼                   ▼
+
+Embedding Service      Prompt Builder
+
+         │                   │
+
+         ▼                   ▼
+
+ Sentence Transformer   Retrieved Memories
+
+         │                   │
+
+         └─────────┬─────────┘
+
+                   ▼
+
+              Gemini LLM
 
                    │
 
                    ▼
 
-         Embedding Service
-
-                   │
-
-                   ▼
-
-      Sentence Transformer
-
-                   │
-
-                   ▼
-
-        384-D Embedding
-
-                   │
-
-                   ▼
-
-      PostgreSQL + pgvector
-
-                   │
-
-                   ▼
-
-        Semantic Search
+          AI Generated Response
 ```
 
 ---
@@ -451,24 +641,35 @@ Database
 
 ---
 
-## Semantic Search
+## AI Chat
 
 ```
 Question
 
 ↓
 
-Embedding
+Generate Query Embedding
 
 ↓
 
-Cosine Similarity
+Semantic Search
 
 ↓
 
-Relevant Memories
+Retrieved Memories
+
+↓
+
+Prompt Builder
+
+↓
+
+Gemini
+
+↓
+
+AI Response
 ```
-
 ---
 
 # Current Capabilities
@@ -480,87 +681,80 @@ The AI subsystem currently supports:
 - Vector database storage
 - Semantic similarity search
 - Retrieval of relevant memories
-- AI-ready backend architecture
+- Retrieval-Augmented Generation (RAG)
+- Prompt engineering
+- Gemini LLM integration
+- AI-generated responses
+- Graceful LLM error handling
+- Modular AI service architecture
 
 ---
 
-# Limitations
+# Current Limitations
 
-The current implementation does not yet generate natural-language responses.
+Although the AI subsystem now supports Retrieval-Augmented Generation, several advanced conversational capabilities are intentionally deferred to future phases.
 
-Instead, it retrieves relevant memories that will later be supplied to a Large Language Model.
+The current implementation does **not yet support**:
 
----
+- Short-term conversation history
+- Multi-turn dialogue understanding
+- Automatic memory extraction
+- Session-based conversations
+- Context window management
+- Memory summarization
+- Token optimization
 
-# Phase 5 AI Architecture
-
-Phase 5 introduces Retrieval-Augmented Generation.
-
-```
-User Question
-
-↓
-
-Embedding Generation
-
-↓
-
-Vector Search
-
-↓
-
-Relevant Memories
-
-↓
-
-Context Builder
-
-↓
-
-Prompt Builder
-
-↓
-
-Large Language Model
-
-↓
-
-Natural Language Response
-```
-
-The retrieval engine implemented in Phase 4 becomes the context provider for the LLM.
+The assistant currently relies exclusively on long-term semantic memory stored in the vector database.
 
 ---
 
 # Future AI Roadmap
 
-The AI subsystem will gradually evolve to support:
-
-## Phase 5
-
-- Retrieval-Augmented Generation (RAG)
-- LLM Integration
-- Prompt Engineering
-- Conversational Responses
-
 ## Phase 6
 
-- Long-Term Memory Consolidation
-- Memory Ranking
-- Context Windows
+Introduce conversational intelligence by implementing:
+
+- Conversation History
+- Automatic Memory Extraction
+- Session-Based Conversations
+- Short-Term Conversational Memory
+- Combined Short-Term and Long-Term Memory
+
+---
 
 ## Phase 7
+
+Improve context management by adding:
+
+- Context Window Management
+- Memory Ranking
+- Memory Summarization
+- Token Optimization
+- Intelligent Context Selection
+
+---
+
+## Phase 8
+
+Introduce intelligent reasoning capabilities:
 
 - Decision Engine
 - Personalized Recommendations
 - Context-Aware Planning
+- Goal Tracking
+- Preference Learning
 
-## Phase 8
+---
+
+## Phase 9
+
+Expand the memory system beyond text:
 
 - Multi-modal Memory
 - Image Embeddings
 - Document Embeddings
 - Voice Memory
+- Cross-modal Retrieval
 
 ---
 
@@ -568,34 +762,97 @@ The AI subsystem will gradually evolve to support:
 
 The AI architecture follows several engineering principles.
 
-### Modularity
+## Modularity
 
-Embedding generation is isolated inside a dedicated service.
+Each AI capability is implemented as an independent service.
 
-### Reusability
+Examples include:
 
-The embedding service can be used by any future module.
+- Embedding Service
+- Prompt Builder
+- LLM Service
+- Chat Service
 
-### Scalability
+This minimizes coupling between components and simplifies maintenance.
 
-The current architecture supports replacing the embedding model without changing business logic.
+---
 
-### Configurability
+## Reusability
 
-The embedding model is loaded from:
+Core AI services are reusable across multiple backend modules.
+
+For example:
+
+- Embedding generation is used for both memory creation and semantic search.
+- Prompt Builder can support multiple LLM providers.
+- Chat Service orchestrates the complete RAG workflow.
+
+---
+
+## Scalability
+
+The architecture is designed to support future improvements without major structural changes.
+
+Examples include:
+
+- Replacing the embedding model
+- Switching from Gemini to another LLM
+- Supporting multiple LLM providers
+- Scaling to larger memory collections
+
+---
+
+## Configurability
+
+AI-related configuration is externalized using environment variables.
+
+Examples include:
 
 ```
-.env
+EMBEDDING_MODEL
+
+GEMINI_API_KEY
+
+GEMINI_MODEL
+
+RAG_SIMILARITY_THRESHOLD
 ```
 
-instead of being hardcoded.
+This allows configuration changes without modifying application code.
+
+---
+
+## Separation of Responsibilities
+
+Each service has a clearly defined responsibility.
+
+| Service | Responsibility |
+|----------|----------------|
+| Embedding Service | Generate vector embeddings |
+| Memory Service | Store and retrieve memories |
+| Prompt Builder | Construct prompts for the LLM |
+| LLM Service | Communicate with Gemini |
+| Chat Service | Coordinate the complete RAG pipeline |
+
+This design improves readability, testing, and long-term maintainability.
 
 ---
 
 # Summary
 
-The AI subsystem introduced in Phase 4 transforms the application from a traditional database-backed memory application into an intelligent semantic retrieval system.
+The AI subsystem has evolved from a semantic retrieval engine into a complete Retrieval-Augmented Generation (RAG) system.
 
-By combining Sentence Transformers, PostgreSQL, pgvector, and cosine similarity search, the application now understands the meaning of user memories rather than relying on exact keyword matching.
+By combining:
 
-This AI architecture establishes the retrieval foundation required for Retrieval-Augmented Generation and all future intelligent capabilities of the AI Personal Memory & Decision Assistant.
+- Sentence Transformers
+- PostgreSQL
+- pgvector
+- Semantic Vector Search
+- Prompt Engineering
+- Google Gemini
+
+the application can retrieve relevant personal memories and generate grounded, personalized responses.
+
+Phase 5 establishes the foundation for an intelligent AI assistant capable of combining semantic memory retrieval with natural language generation.
+
+Future phases will build upon this foundation by introducing conversational memory, automatic memory extraction, intelligent context management, and decision-making capabilities, ultimately transforming the system into a production-ready AI Personal Memory & Decision Assistant.

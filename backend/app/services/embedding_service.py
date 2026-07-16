@@ -10,14 +10,15 @@ MODEL_NAME = os.getenv(
     "all-MiniLM-L6-v2",
 )
 
-print(f"Loading embedding model: {MODEL_NAME}")
+from app.core.logger import logger
+logger.info(f"Loading embedding model: {MODEL_NAME}")
 
 model = SentenceTransformer(
     MODEL_NAME,
     local_files_only=True,
 )
 
-print("Embedding model loaded successfully!")
+logger.info("Embedding model loaded successfully!")
 
 
 def generate_embedding(text: str) -> list[float]:
