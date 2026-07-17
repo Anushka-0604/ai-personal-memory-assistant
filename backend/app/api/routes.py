@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
 from ..models.memory import Memory
+from ..models.chat_session import ChatSession
+from ..models.user import User
+
 from ..schemas.memory import (
     MemoryCreate,
     MemoryResponse,
@@ -9,6 +13,25 @@ from ..schemas.memory import (
     MemorySearchRequest,
     MemorySearchResult,
 )
+
+from ..schemas.user import (
+    MessageResponse,
+    TokenResponse,
+    UserCreate,
+)
+
+from ..schemas.chat import ChatRequest, ChatResponse
+
+from ..schemas.chat_session import (
+    ChatSessionCreate,
+    ChatSessionResponse,
+)
+
+from ..schemas.chat_message import (
+    ChatMessageCreate,
+    ChatMessageResponse,
+)
+
 from ..services.memory_service import (
     create_memory,
     get_memories,
@@ -18,20 +41,31 @@ from ..services.memory_service import (
     search_memories,
 )
 
+from ..services.chat_session_service import (
+    create_chat_session,
+    get_chat_sessions,
+    get_chat_session_by_id,
+    delete_chat_session,
+)
+
+from ..services.chat_message_service import (
+    create_chat_message,
+    get_chat_messages,
+)
+
+from ..services.chat_service import ChatService
+
 from ..core.security import (
     authenticate_user,
     create_access_token,
     hash_password,
 )
-from ..database.dependencies import get_db, get_current_user
-from ..models.user import User
-from ..schemas.user import (
-    MessageResponse,
-    TokenResponse,
-    UserCreate,
+
+from ..database.dependencies import (
+    get_db,
+    get_current_user,
 )
-from ..schemas.chat import ChatRequest, ChatResponse
-from ..services.chat_service import ChatService
+
 router = APIRouter()
 chat_service = ChatService()
 
@@ -248,4 +282,135 @@ def chat(
         user_id=current_user.id,
         question=request.question,
         top_k=request.top_k,
+    )
+
+@router.post(
+    "/chat/sessions",
+    response_model=ChatSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_new_chat_session(
+    session: ChatSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return create_chat_session(
+        db=db,
+        user_id=current_user.id,
+        session=session,
+    )
+
+@router.get(
+    "/chat/sessions",
+    response_model=list[ChatSessionResponse],
+)
+def get_all_chat_sessions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_chat_sessions(
+        db=db,
+        user_id=current_user.id,
+    )
+@router.get(
+    "/chat/sessions/{session_id}",
+    response_model=ChatSessionResponse,
+)
+def get_single_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = get_chat_session_by_id(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return session
+
+@router.delete(
+    "/chat/sessions/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_existing_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = get_chat_session_by_id(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    delete_chat_session(
+        db=db,
+        session=session,
+    )
+
+@router.post(
+    "/chat/sessions/{session_id}/messages",
+    response_model=ChatMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_new_chat_message(
+    session_id: int,
+    message: ChatMessageCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = get_chat_session_by_id(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return create_chat_message(
+        db=db,
+        session_id=session.id,
+        message=message,
+    )
+@router.get(
+    "/chat/sessions/{session_id}/messages",
+    response_model=list[ChatMessageResponse],
+)
+def get_all_chat_messages(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = get_chat_session_by_id(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return get_chat_messages(
+        db=db,
+        session_id=session.id,
     )

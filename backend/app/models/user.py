@@ -12,7 +12,13 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
 
     memories: Mapped[list["Memory"]] = relationship(
-    "Memory",
-    back_populates="user",
-    cascade="all, delete-orphan",
-)
+        "Memory",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(
+        "ChatSession",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
