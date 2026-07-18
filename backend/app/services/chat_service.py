@@ -89,7 +89,15 @@ class ChatService:
             conversation_history=conversation_history,
         )
 
-        answer = self.llm_service.generate_response(prompt)
+        # Generate response from the LLM
+        try:
+            answer = self.llm_service.generate_response(prompt)
+
+        except Exception:
+            answer = (
+                "I'm sorry, but I couldn't generate a response "
+                "at the moment. Please try again later."
+            )
 
         # Save assistant's response
         create_chat_message(

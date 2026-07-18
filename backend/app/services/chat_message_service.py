@@ -7,6 +7,9 @@ from app.models.chat_session import ChatSession
 from app.schemas.chat_message import ChatMessageCreate
 
 
+MAX_CHAT_HISTORY = 10
+
+
 def create_chat_message(
     db: Session,
     session_id: int,
@@ -52,13 +55,19 @@ def get_conversation_history(
     db: Session,
     session_id: int,
 ) -> str:
-    messages = get_chat_messages(
-        db=db,
-        session_id=session_id,
+    messages = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.session_id == session_id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(MAX_CHAT_HISTORY)
+        .all()
     )
 
     if not messages:
         return ""
+
+    # Restore chronological order
+    messages.reverse()
 
     history = []
 
