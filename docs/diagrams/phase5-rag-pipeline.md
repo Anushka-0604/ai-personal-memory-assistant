@@ -2,9 +2,11 @@
 
 ## Overview
 
-Phase 5 introduces Retrieval-Augmented Generation (RAG) into the AI Personal Memory Assistant.
+Phase 5 introduced Retrieval-Augmented Generation (RAG) into the AI Personal Memory & Decision Assistant.
 
-Instead of answering questions solely using the Large Language Model's general knowledge, the assistant first retrieves relevant memories from the user's personal vector database and then uses those memories as context to generate an accurate and personalized response.
+Instead of answering questions solely using the Large Language Model's general knowledge, the assistant first retrieves relevant memories from the user's personal vector database and uses them as context to generate accurate and personalized responses.
+
+With the completion of **Phase 6**, the RAG pipeline has been enhanced by incorporating **conversation history**, allowing the assistant to maintain context across multiple interactions and answer follow-up questions naturally.
 
 ---
 
@@ -27,16 +29,23 @@ Instead of answering questions solely using the Large Language Model's general k
          Similarity Threshold Filter
                        │
                        ▼
+          Conversation History
+                       │
+                       ▼
             Prompt Construction
                        │
                        ▼
               Prompt Builder
+      (Memories + History + Instructions)
                        │
                        ▼
                Gemini LLM
                        │
                        ▼
           AI Generated Response
+                       │
+                       ▼
+         Store Chat Messages
 ```
 
 ---
@@ -84,35 +93,42 @@ Only sufficiently relevant memories are included in the prompt.
 
 ---
 
-## Step 5 — Prompt Construction
+## Step 5 — Conversation History
+
+Recent messages from the current chat session are retrieved.
+
+This provides the assistant with short-term conversational memory, enabling it to understand follow-up questions and maintain context throughout the conversation.
+
+---
+
+## Step 6 — Prompt Construction
 
 The Prompt Builder combines:
 
 - System instructions
-- Retrieved memories
+- Retrieved semantic memories
+- Recent conversation history
 - User question
 
 into a structured prompt for the LLM.
 
 ---
 
-## Step 6 — Large Language Model
+## Step 7 — Large Language Model
 
 The prompt is sent to Google's Gemini API.
 
-Gemini generates a grounded response using the retrieved memories as context.
+Gemini generates a grounded response using both retrieved memories and conversation history as context.
 
 ---
 
-## Step 7 — Response Generation
+## Step 8 — Response Generation
 
-The backend returns:
+The backend:
 
-- AI-generated answer
-- Retrieved memories
-- Similarity scores
-
-to the client.
+- Returns the AI-generated answer
+- Stores both the user message and assistant response
+- Preserves the conversation for future interactions
 
 ---
 
@@ -125,6 +141,10 @@ to the client.
 - all-MiniLM-L6-v2
 - Google Gemini
 - SQLAlchemy
+- Chat Service
+- Prompt Builder
+- Chat Session Service
+- Chat Message Service
 
 ---
 
@@ -132,24 +152,36 @@ to the client.
 
 - Reduces hallucinations
 - Uses personal memories as context
+- Maintains conversation context
 - Produces personalized responses
+- Supports multi-turn conversations
 - Supports semantic search
 - Easily scalable for larger memory collections
 
 ---
 
-# Current Limitations
+# Current Capabilities
 
-Current implementation includes:
+The RAG pipeline now supports:
 
-- Long-term semantic memory
-- Semantic retrieval
-- Prompt engineering
-
-Future phases will add:
-
+- Long-term semantic memory retrieval
 - Short-term conversation history
-- Automatic memory extraction
 - Session-based conversations
-- Context window management
-- Multi-turn dialogue support
+- Multi-turn dialogue
+- Prompt engineering
+- Context-aware AI responses
+- Persistent chat history
+
+---
+
+# Future Enhancements
+
+Future phases may introduce:
+
+- Automatic memory extraction
+- Intelligent memory ranking
+- Context window optimization
+- Document-aware RAG
+- Voice-aware RAG
+- Image-aware RAG
+- Knowledge Graph integration

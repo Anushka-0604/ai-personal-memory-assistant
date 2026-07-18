@@ -4,20 +4,23 @@
 
 **Module:** Artificial Intelligence
 
-**Architecture Version:** v0.5.0
+**Architecture Version:** v0.6.0
 
-**Last Updated:** After Phase 5
+**Last Updated:** After Phase 6
 
 ---
 
 # Overview
 
-The Artificial Intelligence layer is responsible for enabling semantic understanding, intelligent retrieval, and AI-powered response generation using the user's stored memories.
+The Artificial Intelligence layer is responsible for enabling semantic understanding, intelligent retrieval, conversation management, and AI-powered response generation using the user's stored memories.
 
-Unlike traditional applications that rely on exact keyword matching, the AI layer converts every memory into a dense numerical representation called an **embedding**. These embeddings capture the semantic meaning of the stored information, allowing the application to retrieve memories based on intent and context rather than exact wording.
+Unlike traditional applications that rely on exact keyword matching, the AI layer converts every memory into a dense numerical representation called an **embedding**. These embeddings capture the semantic meaning of stored information, allowing the application to retrieve memories based on intent and context rather than exact wording.
 
-At the end of Phase 5, the AI subsystem consists of:
+With the completion of **Phase 6**, the AI subsystem now combines:
 
+- Long-term semantic memory
+- Short-term conversation history
+- Session-based conversations
 - Embedding Generation
 - Vector Storage
 - Semantic Search
@@ -26,9 +29,9 @@ At the end of Phase 5, the AI subsystem consists of:
 - Retrieval-Augmented Generation (RAG)
 - Gemini LLM Integration
 
-The retrieval engine is now connected to a Large Language Model through a Retrieval-Augmented Generation (RAG) pipeline, enabling the assistant to generate personalized, memory-grounded responses.
+The retrieval engine now combines **semantic memories** with **recent conversation history** before constructing prompts for the Large Language Model. This enables the assistant to understand follow-up questions, maintain conversational context, and generate personalized, memory-grounded responses.
 
-Future phases will extend this architecture with conversational memory, automatic memory extraction, context management, and intelligent decision-making.
+Future phases will further extend this architecture with automatic memory extraction, document intelligence, voice intelligence, image understanding, and intelligent decision support.
 
 ---
 
@@ -42,6 +45,12 @@ Future phases will extend this architecture with conversational memory, automati
                      ▼
 
             Natural Language
+
+                     │
+
+                     ▼
+
+          Conversation History
 
                      │
 
@@ -72,6 +81,7 @@ Future phases will extend this architecture with conversational memory, automati
                      ▼
 
             Prompt Builder
+ (History + Memories + Instructions)
 
                      │
 
@@ -84,16 +94,26 @@ Future phases will extend this architecture with conversational memory, automati
                      ▼
 
           AI Generated Response
+
+                     │
+
+                     ▼
+
+        Store Chat Messages
 ```
 
 ---
 
 # AI Pipeline
 
-The AI pipeline transforms human language into intelligent, grounded responses using Retrieval-Augmented Generation.
+The AI pipeline transforms human language into intelligent, context-aware responses using Retrieval-Augmented Generation (RAG).
 
 ```
 User Question
+
+↓
+
+Retrieve Conversation History
 
 ↓
 
@@ -109,6 +129,10 @@ Top-K Relevant Memories
 
 ↓
 
+Similarity Threshold
+
+↓
+
 Prompt Builder
 
 ↓
@@ -117,11 +141,14 @@ Gemini LLM
 
 ↓
 
+Store Chat Messages
+
+↓
+
 AI Generated Response
 ```
 
 ---
-
 # AI Components
 
 ## 1. Embedding Service
@@ -202,11 +229,12 @@ backend/app/services/prompt_builder.py
 Responsibilities
 
 - Construct structured prompts
-- Combine retrieved memories
+- Combine retrieved semantic memories
+- Combine recent conversation history
 - Add system instructions
 - Include the user's current question
 
-The Prompt Builder ensures that the Large Language Model receives sufficient context to generate grounded and personalized responses.
+The Prompt Builder now combines both **long-term memory** (retrieved semantic memories) and **short-term memory** (recent conversation history), enabling the Large Language Model to generate context-aware and personalized responses.
 
 ---
 
@@ -239,201 +267,66 @@ backend/app/services/chat_service.py
 
 Responsibilities
 
+- Retrieve conversation history
 - Perform semantic retrieval
 - Filter relevant memories
-- Construct prompts
+- Build the final prompt
 - Invoke the LLM
+- Store conversation messages
 - Return the final AI response
 
-The Chat Service orchestrates the complete Retrieval-Augmented Generation pipeline.
+The Chat Service orchestrates the complete conversational Retrieval-Augmented Generation (RAG) pipeline.
 
 ---
 
-# Embedding Generation Workflow
+## 6. Chat Session Service
+
+Location
 
 ```
-Memory Text
-
-↓
-
-SentenceTransformer
-
-↓
-
-Tokenizer
-
-↓
-
-Transformer Encoder
-
-↓
-
-Pooling Layer
-
-↓
-
-384-Dimensional Embedding
+backend/app/services/chat_session_service.py
 ```
 
-Example
+Responsibilities
 
-Input
+- Create chat sessions
+- Retrieve user chat sessions
+- Rename chat sessions
+- Delete chat sessions
+- Manage session metadata
 
-```
-"I have an interview tomorrow."
-```
-
-Output
-
-```
-[-0.0803,
-0.0895,
-...
-384 floating point values]
-```
----
-
-# Storage Layer
-
-Generated embeddings are stored inside PostgreSQL using the **pgvector** extension.
-
-Database
-
-```
-PostgreSQL 17
-```
-
-Extension
-
-```
-pgvector
-```
-
-Schema
-
-```
-embedding VECTOR(384)
-```
-
-This enables SQL queries to perform semantic similarity search directly inside the database.
+This service manages persistent conversations for every user.
 
 ---
 
-# Automatic Embedding Generation
+## 7. Chat Message Service
 
-Whenever a new memory is created:
-
-```
-POST /memories
-
-↓
-
-Generate Embedding
-
-↓
-
-Store Memory
-
-+
-
-Store Embedding
-```
-
-No additional user interaction is required.
-
----
-
-# Automatic Embedding Updates
-
-Whenever a memory is updated:
+Location
 
 ```
-PUT /memories/{id}
-
-↓
-
-Generate New Embedding
-
-↓
-
-Replace Previous Vector
+backend/app/services/chat_message_service.py
 ```
 
-This guarantees that stored embeddings always represent the latest version of the memory.
+Responsibilities
 
----
+- Store user messages
+- Store AI responses
+- Retrieve conversation history
+- Maintain message ordering
 
-# Semantic Search Engine
-
-Instead of performing keyword matching, the AI subsystem performs semantic similarity search.
-
-Workflow
-
-```
-User Question
-
-↓
-
-Generate Query Embedding
-
-↓
-
-Cosine Similarity Search
-
-↓
-
-Nearest Embeddings
-
-↓
-
-Top-K Relevant Memories
-```
-
-Each retrieved memory is assigned a similarity score, allowing the assistant to identify the most relevant context.
-
----
-
-# Similarity Metric
-
-Current metric
-
-```
-Cosine Similarity
-```
-
-Reason
-
-Cosine similarity compares the orientation of vectors instead of their magnitude, making it highly effective for sentence embeddings.
-
-Similarity
-
-```
-1.0
-
-↓
-
-Nearly identical meaning
-```
-
-Similarity
-
-```
-0
-
-↓
-
-Completely unrelated meaning
-```
-
----
+This service provides the short-term conversational memory used by the AI assistant.
 
 # Retrieval-Augmented Generation (RAG)
 
-Phase 5 introduces Retrieval-Augmented Generation.
+Phase 5 introduced Retrieval-Augmented Generation (RAG), enabling the assistant to answer questions using the user's stored memories instead of relying solely on the Large Language Model's pretrained knowledge.
 
-Instead of generating answers solely from the Large Language Model's pretrained knowledge, the assistant first retrieves relevant memories from the semantic database.
+With the completion of **Phase 6**, the RAG pipeline has evolved into a **conversational RAG system** by combining:
 
-These retrieved memories become the context supplied to the LLM.
+- Long-term semantic memory (retrieved memories)
+- Short-term conversation history
+- Current user question
+
+This allows the assistant to maintain context across multiple interactions and answer follow-up questions naturally.
 
 Benefits
 
@@ -441,6 +334,8 @@ Benefits
 - Reduced hallucinations
 - Memory-grounded answers
 - Better factual consistency
+- Multi-turn conversations
+- Context-aware reasoning
 - Explainable retrieval process
 
 ---
@@ -449,6 +344,10 @@ Benefits
 
 ```
 User Question
+
+↓
+
+Retrieve Conversation History
 
 ↓
 
@@ -469,6 +368,7 @@ Similarity Threshold Filter
 ↓
 
 Prompt Builder
+(History + Memories + Instructions)
 
 ↓
 
@@ -477,6 +377,10 @@ Gemini LLM
 ↓
 
 AI Generated Response
+
+↓
+
+Store Chat Messages
 ```
 
 ---
@@ -486,8 +390,9 @@ AI Generated Response
 The Prompt Builder creates structured prompts using:
 
 - System instructions
-- Retrieved memories
-- User question
+- Retrieved semantic memories
+- Recent conversation history
+- Current user question
 
 Example
 
@@ -495,37 +400,20 @@ Example
 System:
 You are an AI Personal Memory Assistant.
 
-Relevant Memories:
-- I have an interview tomorrow at 10 AM.
+Conversation History:
+User: I have an interview tomorrow.
+Assistant: Got it.
 
-Question:
-What do I have tomorrow?
+Relevant Memories:
+- Interview is tomorrow at 10 AM.
+
+Current Question:
+What time is it?
 
 Answer:
 ```
 
-Providing structured context helps the LLM generate accurate and grounded responses.
-
----
-
-# LLM Integration
-
-The assistant currently integrates with:
-
-```
-Google Gemini
-```
-
-Responsibilities
-
-- Prompt submission
-- Response generation
-- Error handling
-- API abstraction
-
-The rest of the backend remains independent of the chosen LLM provider.
-
-Future LLMs (such as OpenAI or local models) can be integrated with minimal changes.
+Providing both **long-term semantic memory** and **short-term conversation history** enables the LLM to generate responses that are accurate, personalized, and context-aware.
 
 ---
 
@@ -536,7 +424,11 @@ Question
 
 ↓
 
-Embedding
+Retrieve Conversation History
+
+↓
+
+Generate Query Embedding
 
 ↓
 
@@ -548,6 +440,8 @@ Top-K Retrieval
 
 ↓
 
+Conversation History
+        +
 Relevant Memories
 
 ↓
@@ -560,49 +454,37 @@ Gemini LLM
 
 ↓
 
+Store Chat Messages
+
+↓
+
 AI Response
 ```
-
----
 
 # Current AI Architecture
 
 ```
-                 User
-
-                   │
-
-                   ▼
-
-             Chat Service
-
-                   │
-
-         ┌─────────┴─────────┐
-
-         ▼                   ▼
-
-Embedding Service      Prompt Builder
-
-         │                   │
-
-         ▼                   ▼
-
- Sentence Transformer   Retrieved Memories
-
-         │                   │
-
-         └─────────┬─────────┘
-
-                   ▼
-
-              Gemini LLM
-
-                   │
-
-                   ▼
-
-          AI Generated Response
+                    User
+                      │
+                      ▼
+                 Chat Service
+                      │
+      ┌───────────────┼────────────────┐
+      ▼               ▼                ▼
+Conversation    Embedding Service  Prompt Builder
+ History             │                  │
+      │              ▼                  ▼
+      │      Sentence Transformer  Retrieved Memories
+      │                                 │
+      └───────────────┬─────────────────┘
+                      ▼
+                 Gemini LLM
+                      │
+                      ▼
+            Store Chat Messages
+                      │
+                      ▼
+             AI Generated Response
 ```
 
 ---
@@ -616,7 +498,7 @@ Memory
 
 ↓
 
-Embedding
+Generate Embedding
 
 ↓
 
@@ -632,7 +514,11 @@ Updated Memory
 
 ↓
 
-New Embedding
+Generate New Embedding
+
+↓
+
+Replace Existing Embedding
 
 ↓
 
@@ -648,6 +534,10 @@ Question
 
 ↓
 
+Retrieve Conversation History
+
+↓
+
 Generate Query Embedding
 
 ↓
@@ -656,7 +546,7 @@ Semantic Search
 
 ↓
 
-Retrieved Memories
+Retrieve Relevant Memories
 
 ↓
 
@@ -668,8 +558,13 @@ Gemini
 
 ↓
 
+Store Chat Messages
+
+↓
+
 AI Response
 ```
+
 ---
 
 # Current Capabilities
@@ -677,14 +572,20 @@ AI Response
 The AI subsystem currently supports:
 
 - Automatic embedding generation
+- Automatic embedding updates
 - Dense vector representation
 - Vector database storage
 - Semantic similarity search
 - Retrieval of relevant memories
 - Retrieval-Augmented Generation (RAG)
+- Conversation history retrieval
+- Session-based conversations
+- Multi-turn dialogue
+- Context-aware prompt construction
 - Prompt engineering
 - Gemini LLM integration
 - AI-generated responses
+- Persistent chat history
 - Graceful LLM error handling
 - Modular AI service architecture
 
@@ -692,40 +593,29 @@ The AI subsystem currently supports:
 
 # Current Limitations
 
-Although the AI subsystem now supports Retrieval-Augmented Generation, several advanced conversational capabilities are intentionally deferred to future phases.
+Although the AI subsystem now supports conversational Retrieval-Augmented Generation, several advanced AI capabilities are intentionally deferred to future phases.
 
 The current implementation does **not yet support**:
 
-- Short-term conversation history
-- Multi-turn dialogue understanding
 - Automatic memory extraction
-- Session-based conversations
-- Context window management
+- Intelligent memory ranking
+- Context window optimization
 - Memory summarization
 - Token optimization
-
-The assistant currently relies exclusively on long-term semantic memory stored in the vector database.
+- Document-aware RAG
+- Voice-aware RAG
+- Image-aware RAG
+- Knowledge Graph integration
 
 ---
 
 # Future AI Roadmap
 
-## Phase 6
-
-Introduce conversational intelligence by implementing:
-
-- Conversation History
-- Automatic Memory Extraction
-- Session-Based Conversations
-- Short-Term Conversational Memory
-- Combined Short-Term and Long-Term Memory
-
----
-
 ## Phase 7
 
-Improve context management by adding:
+Introduce more intelligent memory management by implementing:
 
+- Automatic Memory Extraction
 - Context Window Management
 - Memory Ranking
 - Memory Summarization
@@ -736,6 +626,32 @@ Improve context management by adding:
 
 ## Phase 8
 
+Expand the assistant with document intelligence:
+
+- Document Upload
+- Text Extraction
+- Chunking
+- Document Embeddings
+- Semantic Document Search
+- Document-based RAG
+
+---
+
+## Phase 9
+
+Expand beyond text with multimodal AI:
+
+- Voice Memories
+- Whisper Integration
+- Voice Conversations
+- Image Embeddings
+- Image Understanding
+- Cross-modal Retrieval
+
+---
+
+## Phase 10
+
 Introduce intelligent reasoning capabilities:
 
 - Decision Engine
@@ -743,18 +659,7 @@ Introduce intelligent reasoning capabilities:
 - Context-Aware Planning
 - Goal Tracking
 - Preference Learning
-
----
-
-## Phase 9
-
-Expand the memory system beyond text:
-
-- Multi-modal Memory
-- Image Embeddings
-- Document Embeddings
-- Voice Memory
-- Cross-modal Retrieval
+- Knowledge Graph Integration
 
 ---
 
@@ -772,6 +677,8 @@ Examples include:
 - Prompt Builder
 - LLM Service
 - Chat Service
+- Chat Session Service
+- Chat Message Service
 
 This minimizes coupling between components and simplifies maintenance.
 
@@ -784,8 +691,8 @@ Core AI services are reusable across multiple backend modules.
 For example:
 
 - Embedding generation is used for both memory creation and semantic search.
-- Prompt Builder can support multiple LLM providers.
-- Chat Service orchestrates the complete RAG workflow.
+- Prompt Builder combines semantic memories and conversation history.
+- Chat Service orchestrates the complete conversational RAG workflow.
 
 ---
 
@@ -799,6 +706,7 @@ Examples include:
 - Switching from Gemini to another LLM
 - Supporting multiple LLM providers
 - Scaling to larger memory collections
+- Adding document, voice, and image intelligence
 
 ---
 
@@ -830,9 +738,11 @@ Each service has a clearly defined responsibility.
 |----------|----------------|
 | Embedding Service | Generate vector embeddings |
 | Memory Service | Store and retrieve memories |
-| Prompt Builder | Construct prompts for the LLM |
+| Prompt Builder | Construct prompts using memories and conversation history |
 | LLM Service | Communicate with Gemini |
-| Chat Service | Coordinate the complete RAG pipeline |
+| Chat Service | Coordinate the conversational RAG pipeline |
+| Chat Session Service | Manage chat sessions |
+| Chat Message Service | Store and retrieve conversation history |
 
 This design improves readability, testing, and long-term maintainability.
 
@@ -840,7 +750,7 @@ This design improves readability, testing, and long-term maintainability.
 
 # Summary
 
-The AI subsystem has evolved from a semantic retrieval engine into a complete Retrieval-Augmented Generation (RAG) system.
+The AI subsystem has evolved from a semantic retrieval engine into a **conversational Retrieval-Augmented Generation (RAG)** system.
 
 By combining:
 
@@ -848,11 +758,12 @@ By combining:
 - PostgreSQL
 - pgvector
 - Semantic Vector Search
+- Conversation History
 - Prompt Engineering
 - Google Gemini
 
-the application can retrieve relevant personal memories and generate grounded, personalized responses.
+the application can retrieve relevant personal memories, maintain conversational context, and generate accurate, personalized responses.
 
-Phase 5 establishes the foundation for an intelligent AI assistant capable of combining semantic memory retrieval with natural language generation.
+With the completion of **Phase 6**, the assistant now supports persistent chat sessions, multi-turn conversations, and context-aware AI interactions while preserving the modular architecture required for future expansion.
 
-Future phases will build upon this foundation by introducing conversational memory, automatic memory extraction, intelligent context management, and decision-making capabilities, ultimately transforming the system into a production-ready AI Personal Memory & Decision Assistant.
+Future phases will build upon this foundation by introducing automatic memory extraction, document intelligence, multimodal AI, knowledge graphs, and intelligent decision-making capabilities.

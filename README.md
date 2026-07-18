@@ -2,9 +2,9 @@
 
 A production-level AI-powered **Personal Memory & Decision Assistant** that acts as a secure digital **"Second Brain"** for users.
 
-The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Semantic Search**, and **Retrieval-Augmented Generation (RAG)** powered by **Google Gemini**.
+The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Semantic Search**, **Retrieval-Augmented Generation (RAG)**, and **Conversational AI** powered by **Google Gemini**.
 
-The project is being developed incrementally following production software engineering practices, with each phase introducing new architectural capabilities while maintaining modularity, scalability, and clean software design.
+The project is being developed incrementally following production software engineering practices, with each phase introducing new architectural capabilities while maintaining modularity, scalability, security, and clean software design.
 
 ---
 
@@ -112,7 +112,6 @@ The project is being developed incrementally following production software engin
 - PostgreSQL 17
 - pgvector Extension
 - VECTOR(384) Storage
-- Alembic Vector Migration
 
 ### AI Services
 
@@ -132,7 +131,7 @@ The project is being developed incrementally following production software engin
 - Semantic Memory Retrieval
 - Meaning-based Search
 - Vector Similarity Search
-- Retrieval Foundation
+- Long-Term Memory Foundation
 
 ---
 
@@ -145,7 +144,7 @@ The project is being developed incrementally following production software engin
 - Google Gemini Integration
 - Gemini API
 - LLM Service
-- Prompt Engineering
+- Prompt Builder
 
 ### Retrieval-Augmented Generation
 
@@ -161,7 +160,6 @@ The project is being developed incrementally following production software engin
 
 - Protected Chat Endpoint
 - Chat Service
-- AI Question Answering
 - Personalized Responses
 
 ### Reliability
@@ -171,6 +169,45 @@ The project is being developed incrementally following production software engin
 - Modular AI Services
 
 ---
+
+## ✅ Phase 6 – Conversational Memory & Chat Management
+
+**Status:** Completed
+
+### Conversation Management
+
+- Persistent Chat Sessions
+- Conversation History
+- Multi-turn Conversations
+- Session-based Chat Management
+- Short-Term Conversational Memory
+
+### Database
+
+- Chat Sessions Table
+- Chat Messages Table
+- Persistent Conversation Storage
+
+### AI Enhancements
+
+- Conversation-Aware RAG
+- Combined Long-Term and Short-Term Memory
+- Context-Aware Prompt Construction
+- Conversation History Retrieval
+- Enhanced Prompt Builder
+
+### Services
+
+- Chat Session Service
+- Chat Message Service
+- Updated Chat Service
+- Updated Prompt Builder
+
+### APIs
+
+- Chat Session APIs
+- Conversation History APIs
+- Updated AI Chat Endpoint
 
 # 🛠 Technology Stack
 
@@ -205,6 +242,9 @@ The project is being developed incrementally following production software engin
 - all-MiniLM-L6-v2
 - Google Gemini API
 - Retrieval-Augmented Generation (RAG)
+- Conversational RAG
+- Prompt Engineering
+- Semantic Search
 
 ---
 
@@ -251,6 +291,14 @@ AI-Personal-Memory-Assistant/
 │   │   ├── models/
 │   │   ├── schemas/
 │   │   ├── services/
+│   │   │   ├── embedding_service.py
+│   │   │   ├── llm_service.py
+│   │   │   ├── memory_service.py
+│   │   │   ├── prompt_builder.py
+│   │   │   ├── chat_service.py
+│   │   │   ├── chat_session_service.py
+│   │   │   └── chat_message_service.py
+│   │   │
 │   │   ├── utils/
 │   │   └── main.py
 │   │
@@ -271,9 +319,6 @@ AI-Personal-Memory-Assistant/
 │
 └── README.md
 ```
-
----
-
 # 🔗 Current API Endpoints
 
 ## Authentication
@@ -299,11 +344,17 @@ AI-Personal-Memory-Assistant/
 
 ---
 
-## AI APIs
+## Chat APIs
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
-| POST | `/chat` | AI Chat using Retrieval-Augmented Generation |
+| POST | `/chat` | Generate an AI response using Conversational RAG |
+| POST | `/chat/sessions` | Create a new chat session |
+| GET | `/chat/sessions` | Retrieve all chat sessions |
+| GET | `/chat/sessions/{session_id}` | Retrieve a specific chat session |
+| PUT | `/chat/sessions/{session_id}` | Rename a chat session |
+| DELETE | `/chat/sessions/{session_id}` | Delete a chat session |
+| GET | `/chat/sessions/{session_id}/messages` | Retrieve conversation history |
 
 ---
 
@@ -313,40 +364,48 @@ AI-Personal-Memory-Assistant/
 
 - User Registration
 - User Login
-- JWT Authorization
+- JWT Authentication
 - Secure Password Hashing
+- Protected API Endpoints
 
 ---
 
 ## Database
 
-- PostgreSQL
+- PostgreSQL 17
 - SQLAlchemy ORM
 - Alembic Migrations
 - Relational Data Modeling
 - pgvector Integration
+- Persistent Chat Sessions
+- Persistent Conversation History
 
 ---
 
 ## Memory Engine
 
-- Memory CRUD
-- User-specific Storage
+- Memory CRUD Operations
+- User-specific Memory Storage
 - Automatic Embedding Generation
 - Automatic Embedding Updates
+- Semantic Memory Retrieval
 
 ---
 
-## Artificial Intelligence
+## Conversational AI
 
 - Sentence Embeddings
 - Semantic Search
 - Cosine Similarity Search
 - Vector Database
 - Retrieval-Augmented Generation (RAG)
+- Conversational RAG
 - Prompt Builder
 - Google Gemini Integration
-- AI Chat
+- Persistent Chat Sessions
+- Conversation History
+- Multi-turn Conversations
+- Context-Aware Responses
 - Memory-Grounded Responses
 
 ---
@@ -354,42 +413,33 @@ AI-Personal-Memory-Assistant/
 # 🏗 Current System Architecture
 
 ```text
-User
-
-↓
-
-FastAPI Backend
-
-↓
-
-Authentication
-
-↓
-
-Chat Service
-
-↓
-
-Embedding Service
-
-↓
-
-Semantic Search (pgvector)
-
-↓
-
-Prompt Builder
-
-↓
-
-Google Gemini
-
-↓
-
-AI Response
+                     User
+                       │
+                       ▼
+                 FastAPI Backend
+                       │
+      ┌────────────────┼────────────────┐
+      ▼                ▼                ▼
+Authentication    Chat Service    Memory Service
+                       │
+      ┌────────────────┼────────────────┐
+      ▼                ▼                ▼
+Conversation     Embedding        Prompt Builder
+ History           Service
+      │                │                │
+      └────────────────┼────────────────┘
+                       ▼
+              Semantic Search (pgvector)
+                       │
+                       ▼
+                 Google Gemini
+                       │
+                       ▼
+             Store Chat Messages
+                       │
+                       ▼
+                 AI Generated Response
 ```
-
----
 
 # 📈 Development Roadmap
 
@@ -400,23 +450,28 @@ AI Response
 | Phase 3 – Memory Engine | ✅ Completed |
 | Phase 4 – AI Memory Engine & Semantic Search | ✅ Completed |
 | Phase 5 – Retrieval-Augmented Generation (RAG) | ✅ Completed |
-| Phase 6 – Conversational Memory & Automatic Memory Extraction | 🚀 Next |
-| Phase 7 – Context Management & Memory Optimization | ⏳ Planned |
-| Phase 8 – Decision Intelligence Engine | ⏳ Planned |
-| Phase 9 – Production Deployment & Multi-modal AI | ⏳ Planned |
+| Phase 6 – Conversational Memory & Chat Management | ✅ Completed |
+| Phase 7 – Intelligent Memory Management | 🚀 Next |
+| Phase 8 – Document Intelligence | ⏳ Planned |
+| Phase 9 – Multimodal AI | ⏳ Planned |
+| Phase 10 – Decision Intelligence Engine | ⏳ Planned |
 
 ---
 
-# 🎯 Upcoming Features (Phase 6)
+# 🎯 Upcoming Features (Phase 7)
 
-- Conversation History
+The next phase focuses on making the assistant smarter by automatically understanding, organizing, and managing user memories.
+
+### Planned Features
+
 - Automatic Memory Extraction
-- Session-Based Conversations
-- Short-Term Conversational Memory
-- Combined Short-Term and Long-Term Memory
-- Multi-turn AI Conversations
-- Automatic Memory Saving
-- Improved Context Management
+- Intelligent Memory Ranking
+- Context Window Management
+- Memory Summarization
+- Token Optimization
+- Intelligent Context Selection
+- Improved Retrieval Accuracy
+- Enhanced Personalization
 
 ---
 
@@ -432,14 +487,18 @@ Documentation includes:
 - API Documentation
 - Database Documentation
 - Vector Database Design
-- RAG Pipeline
+- Semantic Search
+- Retrieval-Augmented Generation (RAG)
+- Conversational RAG
 - System Diagrams
 
 ---
 
 # 🎓 Project Goal
 
-This project is being developed as a **production-quality AI SaaS application** to demonstrate:
+This project is being developed as a **production-quality AI SaaS application** that serves as a secure digital **Second Brain** for users.
+
+It demonstrates practical implementation of:
 
 - Software Engineering
 - Backend Development
@@ -447,15 +506,36 @@ This project is being developed as a **production-quality AI SaaS application** 
 - Artificial Intelligence
 - Machine Learning
 - Vector Databases
+- Semantic Search
 - Retrieval-Augmented Generation (RAG)
+- Conversational AI
 - Large Language Models (LLMs)
 - Production Architecture
 - Cloud-ready Development
 
-The long-term vision is to build an intelligent personal assistant capable of understanding, remembering, reasoning, and making context-aware decisions using a combination of long-term semantic memory, conversational memory, and modern AI technologies.
+The long-term vision is to build an intelligent assistant capable of:
+
+- Understanding user memories
+- Maintaining long-term semantic memory
+- Preserving short-term conversational context
+- Retrieving relevant information intelligently
+- Assisting with decisions
+- Learning user preferences
+- Providing personalized, context-aware interactions
+
+Future phases will extend the assistant with document intelligence, multimodal AI, automatic memory extraction, knowledge graphs, and intelligent decision-making capabilities.
 
 ---
 
 # 📄 License
 
-This project is being developed for educational purposes, portfolio development, and practical learning in Software Engineering, Artificial Intelligence, Machine Learning, Full Stack Development, and Distributed Systems.
+This project is being developed for educational purposes, portfolio development, and practical learning in:
+
+- Software Engineering
+- Artificial Intelligence
+- Machine Learning
+- Full Stack Development
+- Distributed Systems
+- Large Language Models
+- Retrieval-Augmented Generation
+- Conversational AI

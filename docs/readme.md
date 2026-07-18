@@ -2,7 +2,7 @@
 
 Welcome to the technical documentation for the **AI Personal Memory & Decision Assistant**.
 
-This directory contains the complete software engineering and AI documentation for the project, including system architecture, AI architecture, APIs, database design, semantic search implementation, Retrieval-Augmented Generation (RAG), development phases, and future roadmap.
+This directory contains the complete software engineering and AI documentation for the project, including system architecture, AI architecture, APIs, database design, semantic search, Retrieval-Augmented Generation (RAG), conversational memory, development phases, and the future roadmap.
 
 The documentation is continuously updated after the completion of every development phase.
 
@@ -17,6 +17,7 @@ The documentation is continuously updated after the completion of every developm
 - Phase 3 – Memory Engine
 - Phase 4 – AI Memory Engine & Semantic Search
 - Phase 5 – Retrieval-Augmented Generation (RAG)
+- Phase 6 – Conversational Memory & Chat Management
 
 ---
 
@@ -34,6 +35,7 @@ The documentation is continuously updated after the completion of every developm
 - Phase 3 APIs
 - Phase 4 APIs
 - Phase 5 APIs
+- Phase 6 APIs
 
 ---
 
@@ -51,8 +53,6 @@ The documentation is continuously updated after the completion of every developm
 - Phase 5 RAG Pipeline
 - Semantic Search Architecture
 - Data Flow Diagrams
-
----
 
 # Current Project Status
 
@@ -159,7 +159,7 @@ The documentation is continuously updated after the completion of every developm
 
 - Google Gemini Integration
 - LLM Service
-- Prompt Engineering
+- Prompt Builder
 - AI Response Generation
 
 ### Retrieval-Augmented Generation
@@ -176,8 +176,7 @@ The documentation is continuously updated after the completion of every developm
 
 - Protected Chat API
 - Chat Service
-- AI-Powered Question Answering
-- Personalized Responses
+- Personalized AI Responses
 
 ### Reliability
 
@@ -185,15 +184,56 @@ The documentation is continuously updated after the completion of every developm
 - Logging
 - Production-Oriented Service Architecture
 
+---
+
+## ✅ Phase 6 – Conversational Memory & Chat Management
+
+**Status:** Completed
+
+### Conversation Management
+
+- Persistent Chat Sessions
+- Chat Session Management
+- Conversation History Storage
+- Multi-turn Conversations
+- Short-Term Conversational Memory
+
+### Database
+
+- Chat Sessions Table
+- Chat Messages Table
+- User–Chat Relationships
+- Persistent Conversation Storage
+
+### AI Enhancements
+
+- Conversation-Aware RAG
+- Combined Long-Term and Short-Term Memory
+- Context-Aware Prompt Construction
+- Conversation History Retrieval
+- Enhanced Prompt Builder
+
+### Services
+
+- Chat Session Service
+- Chat Message Service
+- Updated Chat Service
+- Improved Prompt Builder
+- Gemini Integration
+
+### APIs
+
+- Chat Session CRUD APIs
+- Conversation History APIs
+- Updated AI Chat Endpoint
+
 ### Documentation
 
-- Phase 5 Documentation
-- Phase 5 API Reference
-- Phase 5 RAG Pipeline
+- Phase 6 Documentation
+- Phase 6 API Reference
 - Updated AI Architecture
+- Updated Database Documentation
 - Updated System Architecture
-
----
 
 # Current Technology Stack
 
@@ -204,10 +244,14 @@ The documentation is continuously updated after the completion of every developm
 - Alembic
 - Pydantic
 
+---
+
 ## Database
 
 - PostgreSQL 17
 - pgvector
+
+---
 
 ## Machine Learning
 
@@ -217,11 +261,17 @@ The documentation is continuously updated after the completion of every developm
 - Transformers
 - NumPy
 
+---
+
 ## Artificial Intelligence
 
 - Google Gemini
 - Retrieval-Augmented Generation (RAG)
+- Conversational RAG
 - Prompt Engineering
+- Semantic Search
+
+---
 
 ## Authentication
 
@@ -240,39 +290,38 @@ The documentation is continuously updated after the completion of every developm
 | Phase 3 – Memory Engine | ✅ Completed |
 | Phase 4 – AI Memory Engine & Semantic Search | ✅ Completed |
 | Phase 5 – Retrieval-Augmented Generation (RAG) | ✅ Completed |
-| Phase 6 – Conversational Memory & Automatic Memory Extraction | 🚀 Next |
-| Phase 7 – Context Management & Memory Optimization | ⏳ Planned |
-| Phase 8 – Decision Intelligence Engine | ⏳ Planned |
-| Phase 9 – Production Deployment & Multi-modal AI | ⏳ Planned |
+| Phase 6 – Conversational Memory & Chat Management | ✅ Completed |
+| Phase 7 – Intelligent Memory Management | 🚀 Next |
+| Phase 8 – Document Intelligence | ⏳ Planned |
+| Phase 9 – Multimodal AI | ⏳ Planned |
+| Phase 10 – Decision Intelligence Engine | ⏳ Planned |
 
 ---
 
 # Upcoming Phase
 
-## 🚀 Phase 6 – Conversational Memory & Automatic Memory Extraction
+## 🚀 Phase 7 – Intelligent Memory Management
 
 ### Planned Features
 
-- Conversation History
-- Session-Based Conversations
 - Automatic Memory Extraction
-- Short-Term Conversational Memory
-- Combined Short-Term and Long-Term Memory
-- Multi-turn Conversations
-- Improved Context Construction
-- Automatic Memory Saving
+- Intelligent Memory Ranking
+- Context Window Management
+- Memory Summarization
+- Token Optimization
+- Intelligent Context Selection
 
 ---
 
 # Documentation Philosophy
 
-The documentation follows a modular structure where each phase is documented independently while maintaining centralized architecture, database, AI, and API references.
+The documentation follows a modular structure where each development phase is documented independently while maintaining centralized architecture, database, AI, and API references.
 
 This approach provides:
 
 - Clear project evolution
 - Easy navigation
-- Professional documentation standards
+- Professional software documentation
 - Portfolio-quality technical references
 - Maintainable long-term documentation
 - Scalable software engineering practices
@@ -281,6 +330,6 @@ This approach provides:
 
 # Last Updated
 
-**Phase 5 – Retrieval-Augmented Generation (RAG) (Completed)**
+**Phase 6 – Conversational Memory & Chat Management (Completed)**
 
-**Documentation Version:** v0.5.0
+**Documentation Version:** **v0.6.0**

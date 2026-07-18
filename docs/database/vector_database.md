@@ -6,7 +6,7 @@
 
 **Component:** PostgreSQL + pgvector
 
-**Status:** Production Ready (Updated After Phase 5)
+**Status:** Production Ready (Updated After Phase 6)
 
 ---
 
@@ -381,7 +381,7 @@ The returned distance is converted into a similarity score before being returned
 
 # Query Execution
 
-Phase 5 extends semantic search into a complete Retrieval-Augmented Generation (RAG) pipeline.
+Phase 6 extends the Retrieval-Augmented Generation (RAG) pipeline by combining semantic memory retrieval with recent conversation history, allowing the assistant to answer follow-up questions more naturally.
 
 Current workflow
 
@@ -406,6 +406,10 @@ Similarity Threshold Filter
 
 ↓
 
+Conversation History
+
+↓
+
 Prompt Builder
 
 ↓
@@ -417,17 +421,17 @@ Gemini LLM
 AI Generated Response
 ```
 
-The vector database retrieves the most relevant memories, which are then supplied to the Large Language Model as contextual knowledge.
+The vector database retrieves the most relevant long-term memories. In Phase 6, these memories are combined with recent conversation history before being supplied to the Large Language Model, enabling more natural multi-turn conversations.
 
 ---
 
 # Role in Retrieval-Augmented Generation (RAG)
 
-Beginning with Phase 5, the vector database acts as the **knowledge retrieval layer** of the Retrieval-Augmented Generation architecture.
+Beginning with Phase 5 and enhanced further in Phase 6, the vector database acts as the long-term knowledge retrieval layer of the Retrieval-Augmented Generation (RAG) architecture.
 
 Instead of allowing the Large Language Model to answer only from its pretrained knowledge, the backend first retrieves semantically relevant memories from PostgreSQL.
 
-Those memories are inserted into a structured prompt before the request is sent to Gemini.
+Those memories are combined with recent conversation history and inserted into a structured prompt before the request is sent to Gemini.
 
 This approach offers several advantages:
 
@@ -459,6 +463,10 @@ Top-K Relevant Memories
 ↓
 
 Similarity Threshold
+
+↓
+
+Conversation History
 
 ↓
 
@@ -614,6 +622,10 @@ Top-K Relevant Memories
 
 ↓
 
+Conversation History
+
+↓
+
 Prompt Builder
 
 ↓
@@ -625,43 +637,7 @@ Gemini LLM
 AI Generated Response
 ```
 
-Without the vector database, the Large Language Model would rely only on its pretrained knowledge and would not have access to the user's personal memories.
-
-The vector database therefore acts as the knowledge retrieval layer of the AI assistant.
-
----
-
-# Integration with Retrieval-Augmented Generation (RAG)
-
-Phase 5 transforms the vector database from a standalone semantic search engine into an integral part of the Retrieval-Augmented Generation architecture.
-
-The workflow is now:
-
-```
-User Question
-
-↓
-
-Generate Query Embedding
-
-↓
-
-Retrieve Relevant Memories
-
-↓
-
-Construct Prompt
-
-↓
-
-Gemini LLM
-
-↓
-
-Grounded AI Response
-```
-
-The retrieved memories become the contextual knowledge supplied to the LLM, allowing it to generate responses that are:
+The retrieved semantic memories and recent conversation history become the contextual knowledge supplied to the LLM.
 
 - Personalized
 - Memory-grounded
@@ -686,6 +662,8 @@ The vector database currently supports:
 - PostgreSQL + pgvector
 - Retrieval-Augmented Generation (RAG)
 - Long-term semantic memory retrieval
+- Conversation-aware prompt construction
+- Multi-turn conversational context support
 
 ---
 
@@ -703,7 +681,8 @@ The system now provides:
 - Alembic migration support
 - Retrieval-Augmented Generation (RAG)
 - Context retrieval for Gemini
+- Conversation history integration
+- Session-aware RAG pipeline
 
-With the completion of Phase 5, the vector database is no longer used solely for semantic search. It now serves as the retrieval foundation of the AI Personal Memory & Decision Assistant, supplying relevant memories that enable the Large Language Model to generate accurate, personalized, and memory-grounded responses.
-
+With the completion of Phase 6, the vector database continues to serve as the long-term semantic memory of the AI Personal Memory & Decision Assistant. Retrieved memories are now combined with recent conversation history before being sent to the Large Language Model, allowing the assistant to understand follow-up questions and maintain context across multiple interactions.
 Future phases will build upon this foundation by introducing conversational memory, automatic memory extraction, intelligent context management, decision support, and multi-modal memory capabilities.
