@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Session
 
 from app.core.config import RAG_SIMILARITY_THRESHOLD
+from app.services.chat_message_service import (
+    get_conversation_history,
+)
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -18,9 +21,16 @@ class ChatService:
         self,
         db: Session,
         user_id: int,
+        session_id: int,
         question: str,
         top_k: int = 5,
     ):
+        # Load previous conversation history
+        conversation_history = get_conversation_history(
+            db=db,
+            session_id=session_id,
+        )
+
         # Retrieve relevant memories
         memories = search_memories(
             db=db,
@@ -56,7 +66,11 @@ class ChatService:
         prompt = PromptBuilder.build_prompt(
             user_question=question,
             memories=memory_texts,
+            conversation_history=conversation_history,
         )
+        print("\n========== PROMPT ==========\n")
+        print(prompt)
+        print("\n============================\n")
 
         # Generate response from the LLM
         answer = self.llm_service.generate_response(prompt)

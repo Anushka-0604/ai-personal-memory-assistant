@@ -2,6 +2,12 @@ from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
+    session_id: int = Field(
+        ...,
+        gt=0,
+        description="Chat session ID",
+    )
+
     question: str = Field(
         ...,
         min_length=1,

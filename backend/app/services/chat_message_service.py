@@ -32,3 +32,24 @@ def get_chat_messages(
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
+
+def get_conversation_history(
+    db: Session,
+    session_id: int,
+) -> str:
+    messages = get_chat_messages(
+        db=db,
+        session_id=session_id,
+    )
+
+    if not messages:
+        return ""
+
+    history = []
+
+    for message in messages:
+        history.append(
+            f"{message.role.capitalize()}: {message.content}"
+        )
+
+    return "\n".join(history)

@@ -280,6 +280,7 @@ def chat(
     return chat_service.chat(
         db=db,
         user_id=current_user.id,
+        session_id=request.session_id,
         question=request.question,
         top_k=request.top_k,
     )
