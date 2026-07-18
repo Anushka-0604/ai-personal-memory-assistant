@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.models.chat_message import ChatMessage
+from app.models.chat_session import ChatSession
 from app.schemas.chat_message import ChatMessageCreate
 
 
@@ -16,6 +19,17 @@ def create_chat_message(
     )
 
     db.add(new_message)
+
+    # Update the chat session's last activity time
+    session = (
+        db.query(ChatSession)
+        .filter(ChatSession.id == session_id)
+        .first()
+    )
+
+    if session:
+        session.updated_at = datetime.utcnow()
+
     db.commit()
     db.refresh(new_message)
 
@@ -32,6 +46,7 @@ def get_chat_messages(
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
+
 
 def get_conversation_history(
     db: Session,

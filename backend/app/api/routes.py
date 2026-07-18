@@ -24,6 +24,7 @@ from ..schemas.chat import ChatRequest, ChatResponse
 
 from ..schemas.chat_session import (
     ChatSessionCreate,
+    ChatSessionUpdate,
     ChatSessionResponse,
 )
 
@@ -41,6 +42,13 @@ from ..services.memory_service import (
     search_memories,
 )
 
+from ..services.chat_session_service import (
+    create_chat_session,
+    get_chat_sessions,
+    get_chat_session_by_id,
+    update_chat_session,
+    delete_chat_session,
+)
 from ..services.chat_session_service import (
     create_chat_session,
     get_chat_sessions,
@@ -326,6 +334,33 @@ def get_single_chat_session(
         db=db,
         session_id=session_id,
         user_id=current_user.id,
+    )
+@router.put(
+    "/chat/sessions/{session_id}",
+    response_model=ChatSessionResponse,
+)
+def update_existing_chat_session(
+    session_id: int,
+    session_update: ChatSessionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    session = get_chat_session_by_id(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return update_chat_session(
+        db=db,
+        session=session,
+        session_update=session_update,
     )
 
     if session is None:

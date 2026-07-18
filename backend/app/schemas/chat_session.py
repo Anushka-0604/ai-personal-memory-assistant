@@ -7,6 +7,10 @@ class ChatSessionCreate(BaseModel):
     title: str = "New Chat"
 
 
+class ChatSessionUpdate(BaseModel):
+    title: str
+
+
 class ChatSessionResponse(BaseModel):
     id: int
     user_id: int
@@ -15,4 +19,3 @@ class ChatSessionResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-    
