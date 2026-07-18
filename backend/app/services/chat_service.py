@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 
 from app.core.config import RAG_SIMILARITY_THRESHOLD
+from app.schemas.chat_message import ChatMessageCreate
 from app.services.chat_message_service import (
+    create_chat_message,
     get_conversation_history,
 )
 from app.services.llm_service import LLMService
@@ -25,6 +27,16 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
+        # Save user's message
+        create_chat_message(
+            db=db,
+            session_id=session_id,
+            message=ChatMessageCreate(
+                role="user",
+                content=question,
+            ),
+        )
+
         # Load previous conversation history
         conversation_history = get_conversation_history(
             db=db,
@@ -46,34 +58,48 @@ class ChatService:
             if memory["similarity"] >= RAG_SIMILARITY_THRESHOLD
         ]
 
-        # If no relevant memories are found, return immediately
         if not filtered_memories:
-            return {
-                "answer": (
-                    "I couldn't find any relevant memories "
-                    "to answer your question."
+            answer = (
+                "I couldn't find any relevant memories "
+                "to answer your question."
+            )
+
+            create_chat_message(
+                db=db,
+                session_id=session_id,
+                message=ChatMessageCreate(
+                    role="assistant",
+                    content=answer,
                 ),
+            )
+
+            return {
+                "answer": answer,
                 "retrieved_memories": [],
             }
 
-        # Extract memory texts for prompt construction
         memory_texts = [
             memory["content"]
             for memory in filtered_memories
         ]
 
-        # Build the RAG prompt
         prompt = PromptBuilder.build_prompt(
             user_question=question,
             memories=memory_texts,
             conversation_history=conversation_history,
         )
-        print("\n========== PROMPT ==========\n")
-        print(prompt)
-        print("\n============================\n")
 
-        # Generate response from the LLM
         answer = self.llm_service.generate_response(prompt)
+
+        # Save assistant's response
+        create_chat_message(
+            db=db,
+            session_id=session_id,
+            message=ChatMessageCreate(
+                role="assistant",
+                content=answer,
+            ),
+        )
 
         return {
             "answer": answer,
