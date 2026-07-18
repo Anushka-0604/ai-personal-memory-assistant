@@ -1,13 +1,76 @@
+# ==========================
 # Virtual Environment
+# ==========================
 .venv/
+venv/
+env/
 
+# ==========================
 # Environment Variables
+# ==========================
 .env
 backend/.env
+.env.*
 
+# ==========================
 # Python
+# ==========================
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# IDE
+# ==========================
+# Jupyter
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# IDEs
+# ==========================
+.vscode/
+.idea/
+*.code-workspace
+
+# ==========================
+# Operating System
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+
+# ==========================
+# Build & Distribution
+# ==========================
+build/
+dist/
+*.egg
+
+# ==========================
+# Database Files
+# ==========================
+*.sqlite3
+*.db
+
+# ==========================
+# Alembic
+# ==========================
+backend/alembic/versions/__pycache__/
+
+# ==========================
+# Temporary Files
+# ==========================
+*.tmp
+*.temp
