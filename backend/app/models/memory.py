@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -11,7 +11,11 @@ from ..database.base import Base
 class Memory(Base):
     __tablename__ = "memories"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
     user_id: Mapped[int] = mapped_column(
         Integer,
@@ -33,6 +37,12 @@ class Memory(Base):
     # AI embedding (384-dimensional vector)
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(384),
+        nullable=True,
+    )
+
+    # Structured metadata extracted from the memory
+    extracted_data: Mapped[dict | None] = mapped_column(
+        JSON,
         nullable=True,
     )
 

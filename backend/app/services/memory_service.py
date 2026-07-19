@@ -3,9 +3,17 @@ from sqlalchemy.orm import Session
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 from app.services.embedding_service import generate_embedding
+from app.services.extraction_service import ExtractionService
+
+# Initialize the extraction service
+extraction_service = ExtractionService()
 
 
 def create_memory(db: Session, user_id: int, memory: MemoryCreate):
+    # Extract structured information from the memory
+    extraction = extraction_service.extract(memory.content)
+
+    # Generate vector embedding
     embedding = generate_embedding(memory.content)
 
     new_memory = Memory(
@@ -13,6 +21,7 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
         content=memory.content,
         source=memory.source,
         embedding=embedding,
+        extracted_data=extraction.model_dump(),
     )
 
     db.add(new_memory)
@@ -48,7 +57,15 @@ def update_memory(
 ):
     memory.content = memory_update.content
     memory.source = memory_update.source
+
+    # Re-extract metadata whenever the memory changes
+    extraction = extraction_service.extract(memory.content)
+
+    # Regenerate embedding
     memory.embedding = generate_embedding(memory.content)
+
+    # Update extracted metadata
+    memory.extracted_data = extraction.model_dump()
 
     db.commit()
     db.refresh(memory)
@@ -84,7 +101,6 @@ def search_memories(
         .all()
     )
 
-    
     return [
         {
             "id": memory.id,
