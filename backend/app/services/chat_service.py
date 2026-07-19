@@ -6,6 +6,7 @@ from app.services.chat_message_service import (
     create_chat_message,
     get_conversation_history,
 )
+from app.services.context_selector import context_selector
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -51,14 +52,14 @@ class ChatService:
             top_k=top_k,
         )
 
-        # Keep only memories above the similarity threshold
-        filtered_memories = [
-            memory
-            for memory in memories
-            if memory["similarity"] >= RAG_SIMILARITY_THRESHOLD
-        ]
+        # Select the best memories
+        selected_memories = context_selector.select(
+            memories=memories,
+            similarity_threshold=RAG_SIMILARITY_THRESHOLD,
+            max_memories=top_k,
+        )
 
-        if not filtered_memories:
+        if not selected_memories:
             answer = (
                 "I couldn't find any relevant memories "
                 "to answer your question."
@@ -80,7 +81,7 @@ class ChatService:
 
         memory_texts = [
             memory["content"]
-            for memory in filtered_memories
+            for memory in selected_memories
         ]
 
         prompt = PromptBuilder.build_prompt(
@@ -91,7 +92,9 @@ class ChatService:
 
         # Generate response from the LLM
         try:
-            answer = self.llm_service.generate_response(prompt)
+            answer = self.llm_service.generate_response(
+                prompt
+            )
 
         except Exception:
             answer = (
@@ -111,5 +114,5 @@ class ChatService:
 
         return {
             "answer": answer,
-            "retrieved_memories": filtered_memories,
+            "retrieved_memories": selected_memories,
         }
