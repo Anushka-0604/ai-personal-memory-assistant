@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from app.models.memory import Memory
@@ -8,6 +10,8 @@ from app.services.extraction_service import ExtractionService
 from app.services.graph_builder import GraphBuilder
 from app.services.neo4j_service import neo4j_service
 from app.services.ranking_service import ranking_service
+from app.services.sentiment_service import sentiment_service
+from app.services.tag_service import tag_service
 from app.services.temporal_service import temporal_service
 
 # Initialize the extraction service
@@ -18,7 +22,7 @@ graph_builder = GraphBuilder()
 
 
 def create_memory(db: Session, user_id: int, memory: MemoryCreate):
-    # Extract structured information from the memory
+    # Extract structured information
     extraction = extraction_service.extract(memory.content)
 
     # Extract temporal information
@@ -28,6 +32,19 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
 
     # Classify memory
     category = classification_service.classify(
+        memory.content
+    )
+
+    # Calculate importance
+    importance = ranking_service.calculate_importance(
+        memory.content
+    )
+
+    # Generate tags
+    tags = tag_service.generate_tags(extraction)
+
+    # Analyze sentiment
+    sentiment, confidence = sentiment_service.analyze(
         memory.content
     )
 
@@ -48,6 +65,10 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
         extracted_data=extraction.model_dump(),
         temporal_date=temporal_date,
         category=category,
+        importance=importance,
+        tags=tags,
+        sentiment=sentiment,
+        confidence=confidence,
     )
 
     db.add(new_memory)
@@ -65,8 +86,12 @@ def get_memories(db: Session, user_id: int):
     )
 
 
-def get_memory_by_id(db: Session, memory_id: int, user_id: int):
-    return (
+def get_memory_by_id(
+    db: Session,
+    memory_id: int,
+    user_id: int,
+):
+    memory = (
         db.query(Memory)
         .filter(
             Memory.id == memory_id,
@@ -74,6 +99,17 @@ def get_memory_by_id(db: Session, memory_id: int, user_id: int):
         )
         .first()
     )
+
+    if memory:
+        memory.access_count += 1
+        memory.last_accessed = datetime.now(
+            timezone.utc
+        )
+
+        db.commit()
+        db.refresh(memory)
+
+    return memory
 
 
 def update_memory(
@@ -84,16 +120,31 @@ def update_memory(
     memory.content = memory_update.content
     memory.source = memory_update.source
 
-    # Re-extract metadata whenever the memory changes
-    extraction = extraction_service.extract(memory.content)
+    # Re-extract metadata
+    extraction = extraction_service.extract(
+        memory.content
+    )
 
     # Re-extract temporal information
     temporal_date = temporal_service.extract_date(
         memory.content
     )
 
-    # Re-classify the memory
+    # Re-classify
     category = classification_service.classify(
+        memory.content
+    )
+
+    # Recalculate importance
+    importance = ranking_service.calculate_importance(
+        memory.content
+    )
+
+    # Regenerate tags
+    tags = tag_service.generate_tags(extraction)
+
+    # Recalculate sentiment
+    sentiment, confidence = sentiment_service.analyze(
         memory.content
     )
 
@@ -104,16 +155,18 @@ def update_memory(
     neo4j_service.save_graph(graph)
 
     # Regenerate embedding
-    memory.embedding = generate_embedding(memory.content)
+    memory.embedding = generate_embedding(
+        memory.content
+    )
 
-    # Update extracted metadata
+    # Update metadata
     memory.extracted_data = extraction.model_dump()
-
-    # Update temporal information
     memory.temporal_date = temporal_date
-
-    # Update category
     memory.category = category
+    memory.importance = importance
+    memory.tags = tags
+    memory.sentiment = sentiment
+    memory.confidence = confidence
 
     db.commit()
     db.refresh(memory)
@@ -141,10 +194,16 @@ def search_memories(
     results = (
         db.query(
             Memory,
-            Memory.embedding.cosine_distance(query_embedding).label("distance"),
+            Memory.embedding.cosine_distance(
+                query_embedding
+            ).label("distance"),
         )
         .filter(Memory.user_id == user_id)
-        .order_by(Memory.embedding.cosine_distance(query_embedding))
+        .order_by(
+            Memory.embedding.cosine_distance(
+                query_embedding
+            )
+        )
         .limit(top_k)
         .all()
     )
@@ -155,10 +214,16 @@ def search_memories(
 
         similarity_score = 1 - distance
 
-        recency_score = ranking_service.calculate_recency_score(memory)
+        recency_score = (
+            ranking_service.calculate_recency_score(
+                memory
+            )
+        )
 
         importance_score = (
-            ranking_service.calculate_importance_score(memory)
+            ranking_service.calculate_importance_score(
+                memory
+            )
         )
 
         final_score = (
@@ -173,11 +238,29 @@ def search_memories(
                 "content": memory.content,
                 "source": memory.source,
                 "category": memory.category,
+                "importance": memory.importance,
+                "tags": memory.tags,
+                "sentiment": memory.sentiment,
+                "confidence": memory.confidence,
+                "access_count": memory.access_count,
+                "last_accessed": memory.last_accessed,
                 "temporal_date": memory.temporal_date,
-                "similarity": round(similarity_score, 4),
-                "recency_score": round(recency_score, 4),
-                "importance_score": round(importance_score, 4),
-                "final_score": round(final_score, 4),
+                "similarity": round(
+                    similarity_score,
+                    4,
+                ),
+                "recency_score": round(
+                    recency_score,
+                    4,
+                ),
+                "importance_score": round(
+                    importance_score,
+                    4,
+                ),
+                "final_score": round(
+                    final_score,
+                    4,
+                ),
             }
         )
 

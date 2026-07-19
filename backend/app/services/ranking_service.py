@@ -6,6 +6,24 @@ from app.models.memory import Memory
 class RankingService:
     """Ranks memories based on multiple signals."""
 
+    IMPORTANT_KEYWORDS = [
+        "interview",
+        "meeting",
+        "deadline",
+        "exam",
+        "project",
+        "assignment",
+        "goal",
+        "appointment",
+        "internship",
+        "job",
+        "doctor",
+        "travel",
+        "flight",
+        "conference",
+        "presentation",
+    ]
+
     def calculate_recency_score(self, memory: Memory) -> float:
         """Returns a score between 0 and 1 based on how recent the memory is."""
 
@@ -29,36 +47,23 @@ class RankingService:
         else:
             return 0.3
 
-    def calculate_importance_score(self, memory: Memory) -> float:
-        """Estimate the importance of a memory based on keywords."""
+    def calculate_importance(self, text: str) -> float:
+        """Calculate importance directly from text."""
 
-        content = memory.content.lower()
-
-        important_keywords = [
-            "interview",
-            "meeting",
-            "deadline",
-            "exam",
-            "project",
-            "assignment",
-            "goal",
-            "appointment",
-            "internship",
-            "job",
-            "doctor",
-            "travel",
-            "flight",
-            "conference",
-            "presentation",
-        ]
+        text = text.lower()
 
         score = 0.3
 
-        for keyword in important_keywords:
-            if keyword in content:
+        for keyword in self.IMPORTANT_KEYWORDS:
+            if keyword in text:
                 score += 0.1
 
         return min(score, 1.0)
+
+    def calculate_importance_score(self, memory: Memory) -> float:
+        """Compatibility method used by semantic search."""
+
+        return self.calculate_importance(memory.content)
 
 
 ranking_service = RankingService()
