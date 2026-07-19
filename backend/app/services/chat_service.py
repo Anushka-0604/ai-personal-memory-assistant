@@ -2,11 +2,16 @@ from sqlalchemy.orm import Session
 
 from app.core.config import RAG_SIMILARITY_THRESHOLD
 from app.schemas.chat_message import ChatMessageCreate
-from app.services.chat_message_service import (
-    create_chat_message,
-    get_conversation_history,
-)
+from app.services.chat_message_service import create_chat_message
 from app.services.context_selector import context_selector
+from app.services.conversation_context_service import (
+    ConversationContextService,
+)
+
+from app.core.config import (
+    CONVERSATION_HISTORY_LIMIT,
+    RAG_SIMILARITY_THRESHOLD,
+)
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -38,10 +43,13 @@ class ChatService:
             ),
         )
 
-        # Load previous conversation history
-        conversation_history = get_conversation_history(
-            db=db,
-            session_id=session_id,
+        # Load recent conversation history
+        conversation_history = (
+            ConversationContextService.get_recent_messages(
+                db=db,
+                session_id=session_id,
+                limit=CONVERSATION_HISTORY_LIMIT,
+            )
         )
 
         # Retrieve relevant memories
