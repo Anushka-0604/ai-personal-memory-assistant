@@ -13,6 +13,9 @@ from app.services.conversation_context_service import (
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
+from app.services.reference_resolution_service import (
+    ReferenceResolutionService,
+)
 
 
 class ChatService:
@@ -31,7 +34,28 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
-        # Save user's message
+        # Load previous conversation messages
+        conversation_messages = (
+            ConversationContextService.get_recent_messages(
+                db=db,
+                session_id=session_id,
+                limit=CONVERSATION_HISTORY_LIMIT,
+            )
+        )
+
+        # Resolve references using previous conversation
+        resolved_question = (
+            ReferenceResolutionService.resolve_reference(
+                question=question,
+                conversation_history=conversation_messages,
+            )
+        )
+
+        print("\nResolved Question:")
+        print(resolved_question)
+        print()
+
+        # Save user's message AFTER reference resolution
         create_chat_message(
             db=db,
             session_id=session_id,
@@ -41,7 +65,7 @@ class ChatService:
             ),
         )
 
-        # Load recent conversation messages
+        # Reload conversation including latest message
         conversation_messages = (
             ConversationContextService.get_recent_messages(
                 db=db,
@@ -61,7 +85,7 @@ class ChatService:
         memories = search_memories(
             db=db,
             user_id=user_id,
-            query=question,
+            query=resolved_question,
             top_k=top_k,
         )
 
@@ -98,12 +122,11 @@ class ChatService:
         ]
 
         prompt = PromptBuilder.build_prompt(
-            user_question=question,
+            user_question=resolved_question,
             memories=memory_texts,
             conversation_history=conversation_history,
         )
 
-        # Generate response from the LLM
         try:
             answer = self.llm_service.generate_response(
                 prompt
@@ -115,7 +138,6 @@ class ChatService:
                 "at the moment. Please try again later."
             )
 
-        # Save assistant's response
         create_chat_message(
             db=db,
             session_id=session_id,
