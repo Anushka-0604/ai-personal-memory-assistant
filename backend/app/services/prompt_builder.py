@@ -1,3 +1,8 @@
+from app.services.reference_resolution_service import (
+    ReferenceResolutionService,
+)
+
+
 class PromptBuilder:
     """
     Responsible for constructing prompts for the LLM.
@@ -13,6 +18,16 @@ class PromptBuilder:
         Builds a prompt using the user's question,
         previous conversation history, and retrieved memories.
         """
+
+        # Placeholder for future reference resolution.
+        # In later steps, we'll pass the actual conversation
+        # history objects to this service.
+        resolved_question = (
+            ReferenceResolutionService.resolve_reference(
+                question=user_question,
+                conversation_history=[],
+            )
+        )
 
         memory_context = "\n".join(
             f"- {memory}" for memory in memories
@@ -43,7 +58,7 @@ Relevant Memories:
 {memory_context}
 
 Current User Question:
-{user_question}
+{resolved_question}
 
 Answer:
 """
