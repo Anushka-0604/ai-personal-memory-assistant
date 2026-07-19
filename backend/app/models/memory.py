@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -43,6 +43,12 @@ class Memory(Base):
     # Structured metadata extracted from the memory
     extracted_data: Mapped[dict | None] = mapped_column(
         JSON,
+        nullable=True,
+    )
+
+    # Date extracted from temporal expressions (e.g., "tomorrow")
+    temporal_date: Mapped[date | None] = mapped_column(
+        Date,
         nullable=True,
     )
 

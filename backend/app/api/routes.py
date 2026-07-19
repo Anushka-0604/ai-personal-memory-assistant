@@ -6,6 +6,7 @@ from ..models.memory import Memory
 from ..models.chat_session import ChatSession
 from ..models.user import User
 
+from app.services.temporal_query_service import temporal_query_service
 from ..schemas.memory import (
     MemoryCreate,
     MemoryResponse,
@@ -27,7 +28,7 @@ from ..schemas.chat_session import (
     ChatSessionUpdate,
     ChatSessionResponse,
 )
-
+from datetime import date, timedelta
 from ..schemas.chat_message import (
     ChatMessageCreate,
     ChatMessageResponse,
@@ -47,12 +48,6 @@ from ..services.chat_session_service import (
     get_chat_sessions,
     get_chat_session_by_id,
     update_chat_session,
-    delete_chat_session,
-)
-from ..services.chat_session_service import (
-    create_chat_session,
-    get_chat_sessions,
-    get_chat_session_by_id,
     delete_chat_session,
 )
 
@@ -184,6 +179,36 @@ def get_all_memories(
         db=db,
         user_id=current_user.id,
     )
+
+@router.get("/memories/today")
+def get_today_memories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    today = date.today()
+
+    memories = temporal_query_service.get_memories_for_date(
+        db=db,
+        user_id=current_user.id,
+        target_date=today,
+    )
+
+    return memories
+
+@router.get("/memories/tomorrow")
+def get_tomorrow_memories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tomorrow = date.today() + timedelta(days=1)
+
+    memories = temporal_query_service.get_memories_for_date(
+        db=db,
+        user_id=current_user.id,
+        target_date=tomorrow,
+    )
+
+    return memories
 
 @router.get(
     "/memories/{memory_id}",
@@ -335,6 +360,14 @@ def get_single_chat_session(
         session_id=session_id,
         user_id=current_user.id,
     )
+
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return session
 @router.put(
     "/chat/sessions/{session_id}",
     response_model=ChatSessionResponse,
@@ -351,11 +384,11 @@ def update_existing_chat_session(
         user_id=current_user.id,
     )
 
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Chat session not found.",
-        )
+    #if session is None:
+        #raise HTTPException(
+            #status_code=status.HTTP_404_NOT_FOUND,
+            #detail="Chat session not found.",
+        #)
 
     return update_chat_session(
         db=db,
@@ -534,4 +567,33 @@ def get_organizations_for_location(location_name: str):
             location_name
         ),
     }
+@router.get("/memories/today")
+def get_today_memories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    today = date.today()
 
+    memories = temporal_query_service.get_memories_for_date(
+        db=db,
+        user_id=current_user.id,
+        target_date=today,
+    )
+
+    return memories
+
+@router.get("/memories/tomorrow")
+def get_tomorrow_memories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tomorrow = date.today() + timedelta(days=1)
+
+    memories = temporal_query_service.get_memories_for_date(
+        db=db,
+        user_id=current_user.id,
+        target_date=tomorrow,
+    )
+
+    return memories
+ 
