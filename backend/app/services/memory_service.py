@@ -4,14 +4,25 @@ from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 from app.services.embedding_service import generate_embedding
 from app.services.extraction_service import ExtractionService
+from app.services.graph_builder import GraphBuilder
+from app.services.neo4j_service import neo4j_service
 
 # Initialize the extraction service
 extraction_service = ExtractionService()
+
+# Initialize the graph builder
+graph_builder = GraphBuilder()
 
 
 def create_memory(db: Session, user_id: int, memory: MemoryCreate):
     # Extract structured information from the memory
     extraction = extraction_service.extract(memory.content)
+
+    # Build knowledge graph
+    graph = graph_builder.build(extraction)
+
+    # Save graph to Neo4j
+    neo4j_service.save_graph(graph)
 
     # Generate vector embedding
     embedding = generate_embedding(memory.content)
@@ -60,6 +71,12 @@ def update_memory(
 
     # Re-extract metadata whenever the memory changes
     extraction = extraction_service.extract(memory.content)
+
+    # Rebuild knowledge graph
+    graph = graph_builder.build(extraction)
+
+    # Update graph in Neo4j
+    neo4j_service.save_graph(graph)
 
     # Regenerate embedding
     memory.embedding = generate_embedding(memory.content)

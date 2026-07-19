@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
+from app.services.graph_query_service import graph_query_service
 from ..models.memory import Memory
 from ..models.chat_session import ChatSession
 from ..models.user import User
@@ -450,3 +450,88 @@ def get_all_chat_messages(
         db=db,
         session_id=session.id,
     )
+
+# =====================================================
+# Knowledge Graph APIs
+# =====================================================
+
+@router.get("/graph/people")
+def get_people():
+    return {
+        "people": graph_query_service.get_people(),
+    }
+
+
+@router.get("/graph/organizations")
+def get_organizations():
+    return {
+        "organizations": graph_query_service.get_organizations(),
+    }
+
+
+@router.get("/graph/locations")
+def get_locations():
+    return {
+        "locations": graph_query_service.get_locations(),
+    }
+
+
+@router.get("/graph/person/{person_name}/organizations")
+def get_organizations_for_person(person_name: str):
+    return {
+        "person": person_name,
+        "organizations": graph_query_service.get_organizations_for_person(
+            person_name
+        ),
+    }
+
+
+@router.get("/graph/organization/{organization_name}/people")
+def get_people_for_organization(organization_name: str):
+    return {
+        "organization": organization_name,
+        "people": graph_query_service.get_people_for_organization(
+            organization_name
+        ),
+    }
+
+
+@router.get("/graph/person/{person_name}/locations")
+def get_locations_for_person(person_name: str):
+    return {
+        "person": person_name,
+        "locations": graph_query_service.get_locations_for_person(
+            person_name
+        ),
+    }
+
+
+@router.get("/graph/location/{location_name}/people")
+def get_people_for_location(location_name: str):
+    return {
+        "location": location_name,
+        "people": graph_query_service.get_people_for_location(
+            location_name
+        ),
+    }
+
+
+@router.get("/graph/organization/{organization_name}/locations")
+def get_locations_for_organization(organization_name: str):
+    return {
+        "organization": organization_name,
+        "locations": graph_query_service.get_locations_for_organization(
+            organization_name
+        ),
+    }
+
+
+@router.get("/graph/location/{location_name}/organizations")
+def get_organizations_for_location(location_name: str):
+    return {
+        "location": location_name,
+        "organizations": graph_query_service.get_organizations_for_location(
+            location_name
+        ),
+    }
+

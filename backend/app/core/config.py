@@ -27,3 +27,9 @@ RAG_SIMILARITY_THRESHOLD = float(
 MAX_CHAT_HISTORY = int(
     os.getenv("MAX_CHAT_HISTORY", 10)
 )
+
+NEO4J_URI = os.getenv("NEO4J_URI")
+
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
