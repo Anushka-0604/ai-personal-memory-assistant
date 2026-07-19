@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
+from app.services.classification_service import classification_service
 from app.services.embedding_service import generate_embedding
 from app.services.extraction_service import ExtractionService
 from app.services.graph_builder import GraphBuilder
@@ -25,6 +26,11 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
         memory.content
     )
 
+    # Classify memory
+    category = classification_service.classify(
+        memory.content
+    )
+
     # Build knowledge graph
     graph = graph_builder.build(extraction)
 
@@ -41,6 +47,7 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
         embedding=embedding,
         extracted_data=extraction.model_dump(),
         temporal_date=temporal_date,
+        category=category,
     )
 
     db.add(new_memory)
@@ -85,6 +92,11 @@ def update_memory(
         memory.content
     )
 
+    # Re-classify the memory
+    category = classification_service.classify(
+        memory.content
+    )
+
     # Rebuild knowledge graph
     graph = graph_builder.build(extraction)
 
@@ -99,6 +111,9 @@ def update_memory(
 
     # Update temporal information
     memory.temporal_date = temporal_date
+
+    # Update category
+    memory.category = category
 
     db.commit()
     db.refresh(memory)
@@ -157,6 +172,7 @@ def search_memories(
                 "id": memory.id,
                 "content": memory.content,
                 "source": memory.source,
+                "category": memory.category,
                 "temporal_date": memory.temporal_date,
                 "similarity": round(similarity_score, 4),
                 "recency_score": round(recency_score, 4),
