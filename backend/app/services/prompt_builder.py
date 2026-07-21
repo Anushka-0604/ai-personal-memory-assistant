@@ -1,7 +1,19 @@
 class PromptBuilder:
     """
-    Responsible for constructing prompts for the LLM.
+    Builds structured prompts for the LLM.
     """
+
+    SYSTEM_INSTRUCTIONS = """
+You are an AI Personal Memory & Decision Assistant.
+
+You help users answer questions using only the provided context.
+
+Rules:
+1. Use the context as your primary source of truth.
+2. Never invent information.
+3. If the answer is unavailable, clearly state that you could not find it.
+4. Be concise, accurate, and natural.
+"""
 
     @staticmethod
     def build_prompt(
@@ -9,28 +21,19 @@ class PromptBuilder:
         context: str,
     ) -> str:
         """
-        Builds the final prompt using the
-        unified conversation context.
+        Construct the final prompt.
         """
 
-        prompt = f"""
-You are an AI Personal Memory & Decision Assistant.
+        sections = [
+            PromptBuilder.SYSTEM_INSTRUCTIONS.strip(),
+            "",
+            "========== CONTEXT ==========",
+            context,
+            "",
+            "========== USER QUESTION ==========",
+            user_question,
+            "",
+            "========== ASSISTANT RESPONSE ==========",
+        ]
 
-Your role is to help the user by answering questions using the provided context.
-
-Instructions:
-- Use ONLY the information present in the context.
-- Do not invent, assume, or fabricate information.
-- If the answer cannot be found in the context, clearly say so.
-- Answer naturally and concisely.
-
-Context:
-{context}
-
-Current User Question:
-{user_question}
-
-Answer:
-"""
-
-        return prompt.strip()
+        return "\n".join(sections)

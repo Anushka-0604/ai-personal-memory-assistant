@@ -155,6 +155,9 @@ class ChatService:
 )
 
         try:
+            print("\n========== FINAL PROMPT ==========")
+            print(prompt)
+            print("==================================\n")
             answer = self.llm_service.generate_response(
                 prompt
             )
