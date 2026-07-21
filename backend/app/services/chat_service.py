@@ -10,6 +10,9 @@ from app.services.context_selector import context_selector
 from app.services.conversation_context_service import (
     ConversationContextService,
 )
+from app.services.conversation_retrieval_service import (
+    ConversationRetrievalService,
+)
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -34,7 +37,7 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
-        # Load previous conversation messages
+        # Load previous conversation
         conversation_messages = (
             ConversationContextService.get_recent_messages(
                 db=db,
@@ -43,7 +46,7 @@ class ChatService:
             )
         )
 
-        # Resolve references using previous conversation
+        # Resolve references
         resolved_question = (
             ReferenceResolutionService.resolve_reference(
                 question=question,
@@ -51,11 +54,7 @@ class ChatService:
             )
         )
 
-        print("\nResolved Question:")
-        print(resolved_question)
-        print()
-
-        # Save user's message AFTER reference resolution
+        # Save current user message
         create_chat_message(
             db=db,
             session_id=session_id,
@@ -74,22 +73,32 @@ class ChatService:
             )
         )
 
-        # Format conversation for Prompt Builder
+        # Format conversation
         conversation_history = (
             ConversationContextService.format_conversation(
                 conversation_messages
             )
         )
 
-        # Retrieve relevant memories
+        # Build conversation-aware search query
+        search_query = (
+            ConversationRetrievalService.build_search_query(
+                resolved_question=resolved_question,
+                conversation_history=conversation_history,
+            )
+        )
+
+       
+
+        # Retrieve memories
         memories = search_memories(
             db=db,
             user_id=user_id,
-            query=resolved_question,
+            query=search_query,
             top_k=top_k,
         )
 
-        # Select the best memories
+        # Select best memories
         selected_memories = context_selector.select(
             memories=memories,
             similarity_threshold=RAG_SIMILARITY_THRESHOLD,
@@ -131,7 +140,6 @@ class ChatService:
             answer = self.llm_service.generate_response(
                 prompt
             )
-
         except Exception:
             answer = (
                 "I'm sorry, but I couldn't generate a response "
