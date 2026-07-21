@@ -13,6 +13,9 @@ from app.services.conversation_context_service import (
 from app.services.conversation_retrieval_service import (
     ConversationRetrievalService,
 )
+from app.services.conversation_summary_service import (
+    ConversationSummaryService,
+)
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -80,6 +83,17 @@ class ChatService:
             )
         )
 
+        # Generate conversation summary
+        conversation_summary = (
+            ConversationSummaryService.generate_summary(
+                conversation_messages
+            )
+        )
+
+        print("\nConversation Summary:")
+        print(conversation_summary)
+        print()
+
         # Build conversation-aware search query
         search_query = (
             ConversationRetrievalService.build_search_query(
@@ -87,8 +101,6 @@ class ChatService:
                 conversation_history=conversation_history,
             )
         )
-
-       
 
         # Retrieve memories
         memories = search_memories(
@@ -133,7 +145,7 @@ class ChatService:
         prompt = PromptBuilder.build_prompt(
             user_question=resolved_question,
             memories=memory_texts,
-            conversation_history=conversation_history,
+            conversation_history=conversation_summary,
         )
 
         try:
