@@ -29,7 +29,8 @@ from app.services.reference_resolution_service import (
 
 class ChatService:
     """
-    Responsible for orchestrating the complete RAG pipeline.
+    Responsible for orchestrating the complete
+    Retrieval-Augmented Generation (RAG) pipeline.
     """
 
     def __init__(self):
@@ -43,7 +44,9 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
-        # Load previous conversation
+        # -------------------------------------------------------------
+        # Step 1: Load previous conversation
+        # -------------------------------------------------------------
         conversation_messages = (
             ConversationContextService.get_recent_messages(
                 db=db,
@@ -52,7 +55,9 @@ class ChatService:
             )
         )
 
-        # Resolve references
+        # -------------------------------------------------------------
+        # Step 2: Resolve references
+        # -------------------------------------------------------------
         resolved_question = (
             ReferenceResolutionService.resolve_reference(
                 question=question,
@@ -60,7 +65,9 @@ class ChatService:
             )
         )
 
-        # Save current user message
+        # -------------------------------------------------------------
+        # Step 3: Save current user message
+        # -------------------------------------------------------------
         create_chat_message(
             db=db,
             session_id=session_id,
@@ -70,7 +77,9 @@ class ChatService:
             ),
         )
 
-        # Reload conversation including latest message
+        # -------------------------------------------------------------
+        # Step 4: Reload conversation including latest message
+        # -------------------------------------------------------------
         conversation_messages = (
             ConversationContextService.get_recent_messages(
                 db=db,
@@ -79,21 +88,27 @@ class ChatService:
             )
         )
 
-        # Conversation history
+        # -------------------------------------------------------------
+        # Step 5: Format conversation
+        # -------------------------------------------------------------
         conversation_history = (
             ConversationContextService.format_conversation(
                 conversation_messages
             )
         )
 
-        # Conversation summary
+        # -------------------------------------------------------------
+        # Step 6: Generate conversation summary
+        # -------------------------------------------------------------
         conversation_summary = (
             ConversationSummaryService.generate_summary(
                 conversation_messages
             )
         )
 
-        # Search query
+        # -------------------------------------------------------------
+        # Step 7: Build conversation-aware search query
+        # -------------------------------------------------------------
         search_query = (
             ConversationRetrievalService.build_search_query(
                 resolved_question=resolved_question,
@@ -101,7 +116,9 @@ class ChatService:
             )
         )
 
-        # Retrieve memories
+        # -------------------------------------------------------------
+        # Step 8: Retrieve memories
+        # -------------------------------------------------------------
         memories = search_memories(
             db=db,
             user_id=user_id,
@@ -109,7 +126,9 @@ class ChatService:
             top_k=top_k,
         )
 
-        # Select best memories
+        # -------------------------------------------------------------
+        # Step 9: Select relevant memories
+        # -------------------------------------------------------------
         selected_memories = context_selector.select(
             memories=memories,
             similarity_threshold=RAG_SIMILARITY_THRESHOLD,
@@ -136,12 +155,17 @@ class ChatService:
                 "retrieved_memories": [],
             }
 
+        # -------------------------------------------------------------
+        # Step 10: Extract memory text
+        # -------------------------------------------------------------
         memory_texts = [
             memory["content"]
             for memory in selected_memories
         ]
 
-        # Build unified context
+        # -------------------------------------------------------------
+        # Step 11: Build unified context
+        # -------------------------------------------------------------
         context = (
             ConversationMemoryService.build_context(
                 memories=memory_texts,
@@ -149,15 +173,22 @@ class ChatService:
             )
         )
 
-        prompt = PromptBuilder.build_prompt(
-        user_question=resolved_question,
-        context=context,
-)
+        # -------------------------------------------------------------
+        # Step 12: Build chat prompt
+        # -------------------------------------------------------------
+        prompt = PromptBuilder.build_chat_prompt(
+            user_question=resolved_question,
+            context=context,
+        )
 
+        # -------------------------------------------------------------
+        # Step 13: Generate AI response
+        # -------------------------------------------------------------
         try:
             print("\n========== FINAL PROMPT ==========")
             print(prompt)
             print("==================================\n")
+
             answer = self.llm_service.generate_response(
                 prompt
             )
@@ -168,6 +199,9 @@ class ChatService:
                 "at the moment. Please try again later."
             )
 
+        # -------------------------------------------------------------
+        # Step 14: Save assistant response
+        # -------------------------------------------------------------
         create_chat_message(
             db=db,
             session_id=session_id,
