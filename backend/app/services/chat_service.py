@@ -10,6 +10,9 @@ from app.services.context_selector import context_selector
 from app.services.conversation_context_service import (
     ConversationContextService,
 )
+from app.services.conversation_memory_service import (
+    ConversationMemoryService,
+)
 from app.services.conversation_retrieval_service import (
     ConversationRetrievalService,
 )
@@ -76,25 +79,21 @@ class ChatService:
             )
         )
 
-        # Format conversation
+        # Conversation history
         conversation_history = (
             ConversationContextService.format_conversation(
                 conversation_messages
             )
         )
 
-        # Generate conversation summary
+        # Conversation summary
         conversation_summary = (
             ConversationSummaryService.generate_summary(
                 conversation_messages
             )
         )
 
-        print("\nConversation Summary:")
-        print(conversation_summary)
-        print()
-
-        # Build conversation-aware search query
+        # Search query
         search_query = (
             ConversationRetrievalService.build_search_query(
                 resolved_question=resolved_question,
@@ -142,16 +141,24 @@ class ChatService:
             for memory in selected_memories
         ]
 
-        prompt = PromptBuilder.build_prompt(
-            user_question=resolved_question,
-            memories=memory_texts,
-            conversation_history=conversation_summary,
+        # Build unified context
+        context = (
+            ConversationMemoryService.build_context(
+                memories=memory_texts,
+                conversation_summary=conversation_summary,
+            )
         )
+
+        prompt = PromptBuilder.build_prompt(
+        user_question=resolved_question,
+        context=context,
+)
 
         try:
             answer = self.llm_service.generate_response(
                 prompt
             )
+
         except Exception:
             answer = (
                 "I'm sorry, but I couldn't generate a response "
