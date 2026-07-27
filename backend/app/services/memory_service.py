@@ -252,8 +252,7 @@ def search_memories(
 
     for memory, distance in results:
 
-        # Automatically archive memories that
-        # satisfy the archiving rules
+        # Automatically archive memories
         if archive_service.should_archive(memory):
             archive_service.archive(memory)
             db.commit()

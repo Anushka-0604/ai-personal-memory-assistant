@@ -136,3 +136,10 @@ class Memory(Base):
         default=False,
         nullable=False,
     )
+
+    # Indicates whether the memory has been forgotten
+    is_forgotten: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
