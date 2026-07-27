@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 from app.services.classification_service import classification_service
+from app.services.duplicate_detection_service import (
+    duplicate_detection_service,
+)
 from app.services.embedding_service import generate_embedding
 from app.services.extraction_service import ExtractionService
 from app.services.graph_builder import GraphBuilder
@@ -53,6 +56,35 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
 
     # Save graph to Neo4j
     neo4j_service.save_graph(graph)
+
+    # -----------------------------------------------------
+    # Duplicate Detection
+    # -----------------------------------------------------
+
+    duplicate = duplicate_detection_service.find_duplicate(
+        db=db,
+        user_id=user_id,
+        content=memory.content,
+    )
+
+    if duplicate["is_duplicate"]:
+
+        existing_memory = duplicate["memory"]
+
+        # Increase importance slightly
+        existing_memory.importance = min(
+            (existing_memory.importance or 0.5) + 0.05,
+            1.0,
+        )
+
+        existing_memory.updated_at = datetime.now(
+            timezone.utc
+        )
+
+        db.commit()
+        db.refresh(existing_memory)
+
+        return existing_memory
 
     # Generate vector embedding
     embedding = generate_embedding(memory.content)
