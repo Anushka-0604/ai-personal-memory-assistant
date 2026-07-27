@@ -121,3 +121,10 @@ class Memory(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+
+    # Number of times this memory has been reinforced
+    evidence_count: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )

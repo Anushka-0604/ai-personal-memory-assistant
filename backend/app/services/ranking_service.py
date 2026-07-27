@@ -32,7 +32,9 @@ class RankingService:
         created_at = memory.created_at
 
         if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
+            created_at = created_at.replace(
+                tzinfo=timezone.utc
+            )
 
         age_days = (now - created_at).days
 
@@ -60,10 +62,63 @@ class RankingService:
 
         return min(score, 1.0)
 
-    def calculate_importance_score(self, memory: Memory) -> float:
-        """Compatibility method used by semantic search."""
+    def calculate_memory_decay(
+        self,
+        memory: Memory,
+    ) -> float:
+        """
+        Returns a decay multiplier between 0 and 1.
 
-        return self.calculate_importance(memory.content)
+        Recently accessed memories decay less.
+        Older memories decay more.
+        """
+
+        now = datetime.now(timezone.utc)
+
+        last_access = (
+            memory.last_accessed
+            or memory.created_at
+        )
+
+        if last_access.tzinfo is None:
+            last_access = last_access.replace(
+                tzinfo=timezone.utc
+            )
+
+        days = (now - last_access).days
+
+        if days <= 7:
+            return 1.0
+        elif days <= 30:
+            return 0.95
+        elif days <= 90:
+            return 0.85
+        elif days <= 180:
+            return 0.70
+        else:
+            return 0.50
+
+    def calculate_importance_score(
+        self,
+        memory: Memory,
+    ) -> float:
+        """
+        Final importance score after applying memory decay.
+        """
+
+        base_score = (
+            memory.importance
+            if memory.importance is not None
+            else self.calculate_importance(
+                memory.content
+            )
+        )
+
+        decay = self.calculate_memory_decay(
+            memory
+        )
+
+        return base_score * decay
 
 
 ranking_service = RankingService()

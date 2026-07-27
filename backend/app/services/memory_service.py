@@ -77,6 +77,10 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
             1.0,
         )
 
+        # Increase evidence count
+        existing_memory.evidence_count += 1
+
+        # Refresh timestamp
         existing_memory.updated_at = datetime.now(
             timezone.utc
         )
@@ -302,3 +306,4 @@ def search_memories(
     )
 
     return ranked_results
+
