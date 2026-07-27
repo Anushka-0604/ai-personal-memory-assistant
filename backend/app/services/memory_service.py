@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
+from app.services.archive_service import archive_service
 from app.services.classification_service import classification_service
 from app.services.duplicate_detection_service import (
     duplicate_detection_service,
@@ -234,7 +235,10 @@ def search_memories(
                 query_embedding
             ).label("distance"),
         )
-        .filter(Memory.user_id == user_id)
+        .filter(
+            Memory.user_id == user_id,
+            Memory.is_archived == False,
+        )
         .order_by(
             Memory.embedding.cosine_distance(
                 query_embedding
@@ -247,6 +251,13 @@ def search_memories(
     ranked_results = []
 
     for memory, distance in results:
+
+        # Automatically archive memories that
+        # satisfy the archiving rules
+        if archive_service.should_archive(memory):
+            archive_service.archive(memory)
+            db.commit()
+            continue
 
         similarity_score = 1 - distance
 
@@ -306,4 +317,3 @@ def search_memories(
     )
 
     return ranked_results
-

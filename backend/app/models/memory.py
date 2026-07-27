@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -126,5 +127,12 @@ class Memory(Base):
     evidence_count: Mapped[int] = mapped_column(
         Integer,
         default=1,
+        nullable=False,
+    )
+
+    # Indicates whether the memory has been archived
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
