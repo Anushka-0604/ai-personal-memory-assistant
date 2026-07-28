@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ..services.dashboard_service import dashboard_service
-
+from ..services.review_service import review_service
+from ..schemas.review import ReviewMemory
 from ..schemas.dashboard import DashboardSummary
 from ..services.recommendation_service import recommendation_service
 from ..services.analytics_service import analytics_service
@@ -384,6 +385,22 @@ def get_recommendations(
     current_user: User = Depends(get_current_user),
 ):
     return recommendation_service.get_recommended_memories(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/review-queue",
+    response_model=list[ReviewMemory],
+)
+def get_review_queue(
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return review_service.get_review_queue(
         db=db,
         user_id=current_user.id,
         limit=limit,
