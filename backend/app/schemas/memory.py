@@ -51,11 +51,14 @@ class MemorySearchResult(BaseModel):
     id: int
     content: str
     source: str
+
     category: str | None = None
     temporal_date: date | None = None
+
     similarity: float
     recency_score: float
     importance_score: float
+    interaction_score: float
     final_score: float
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,12 +1,16 @@
+# routes.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
 from app.services.graph_query_service import graph_query_service
+from app.services.temporal_query_service import temporal_query_service
+
 from ..models.memory import Memory
 from ..models.chat_session import ChatSession
 from ..models.user import User
+from ..models.user_interaction import InteractionType
 
-from app.services.temporal_query_service import temporal_query_service
 from ..schemas.memory import (
     MemoryCreate,
     MemoryResponse,
@@ -21,14 +25,17 @@ from ..schemas.user import (
     UserCreate,
 )
 
-from ..schemas.chat import ChatRequest, ChatResponse
+from ..schemas.chat import (
+    ChatRequest,
+    ChatResponse,
+)
 
 from ..schemas.chat_session import (
     ChatSessionCreate,
     ChatSessionUpdate,
     ChatSessionResponse,
 )
-from datetime import date, timedelta
+
 from ..schemas.chat_message import (
     ChatMessageCreate,
     ChatMessageResponse,
@@ -57,6 +64,7 @@ from ..services.chat_message_service import (
 )
 
 from ..services.chat_service import ChatService
+from ..services.interaction_service import interaction_service
 
 from ..core.security import (
     authenticate_user,
@@ -69,6 +77,8 @@ from ..database.dependencies import (
     get_current_user,
 )
 
+from datetime import date, timedelta
+
 router = APIRouter()
 chat_service = ChatService()
 
@@ -80,7 +90,10 @@ def root():
     }
 
 
-@router.post("/register", response_model=MessageResponse)
+@router.post(
+    "/register",
+    response_model=MessageResponse,
+)
 def register_user(
     user: UserCreate,
     db: Session = Depends(get_db),
@@ -112,7 +125,10 @@ def register_user(
     }
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+)
 def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
@@ -151,6 +167,7 @@ def get_me(
         "email": current_user.email,
     }
 
+
 @router.post(
     "/memories",
     response_model=MemoryResponse,
@@ -167,6 +184,7 @@ def create_new_memory(
         memory=memory,
     )
 
+
 @router.get(
     "/memories",
     response_model=list[MemoryResponse],
@@ -180,6 +198,7 @@ def get_all_memories(
         user_id=current_user.id,
     )
 
+
 @router.get("/memories/today")
 def get_today_memories(
     db: Session = Depends(get_db),
@@ -187,13 +206,12 @@ def get_today_memories(
 ):
     today = date.today()
 
-    memories = temporal_query_service.get_memories_for_date(
+    return temporal_query_service.get_memories_for_date(
         db=db,
         user_id=current_user.id,
         target_date=today,
     )
 
-    return memories
 
 @router.get("/memories/tomorrow")
 def get_tomorrow_memories(
@@ -202,13 +220,12 @@ def get_tomorrow_memories(
 ):
     tomorrow = date.today() + timedelta(days=1)
 
-    memories = temporal_query_service.get_memories_for_date(
+    return temporal_query_service.get_memories_for_date(
         db=db,
         user_id=current_user.id,
         target_date=tomorrow,
     )
 
-    return memories
 
 @router.get(
     "/memories/{memory_id}",
@@ -231,7 +248,15 @@ def get_single_memory(
             detail="Memory not found.",
         )
 
+    interaction_service.record_interaction(
+        db=db,
+        user_id=current_user.id,
+        memory_id=memory.id,
+        interaction_type=InteractionType.VIEW,
+    )
+
     return memory
+
 
 @router.put(
     "/memories/{memory_id}",
@@ -255,11 +280,20 @@ def update_existing_memory(
             detail="Memory not found.",
         )
 
-    return update_memory(
+    updated_memory = update_memory(
         db=db,
         memory=memory,
         memory_update=memory_update,
     )
+
+    interaction_service.record_interaction(
+        db=db,
+        user_id=current_user.id,
+        memory_id=updated_memory.id,
+        interaction_type=InteractionType.UPDATE,
+    )
+
+    return updated_memory
 @router.post(
     "/memories/search",
     response_model=list[MemorySearchResult],
@@ -269,12 +303,24 @@ def semantic_search(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return search_memories(
+    results = search_memories(
         db=db,
         user_id=current_user.id,
         query=request.query,
         top_k=request.top_k,
     )
+
+    for memory in results:
+        interaction_service.record_interaction(
+            db=db,
+            user_id=current_user.id,
+            memory_id=memory["id"],
+            interaction_type=InteractionType.SEARCH,
+        )
+
+    return results
+
+
 @router.delete(
     "/memories/{memory_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -296,10 +342,18 @@ def delete_existing_memory(
             detail="Memory not found.",
         )
 
+    interaction_service.record_interaction(
+        db=db,
+        user_id=current_user.id,
+        memory_id=memory.id,
+        interaction_type=InteractionType.DELETE,
+    )
+
     delete_memory(
         db=db,
         memory=memory,
     )
+
 
 @router.post(
     "/chat",
@@ -318,6 +372,7 @@ def chat(
         top_k=request.top_k,
     )
 
+
 @router.post(
     "/chat/sessions",
     response_model=ChatSessionResponse,
@@ -334,6 +389,7 @@ def create_new_chat_session(
         session=session,
     )
 
+
 @router.get(
     "/chat/sessions",
     response_model=list[ChatSessionResponse],
@@ -346,6 +402,8 @@ def get_all_chat_sessions(
         db=db,
         user_id=current_user.id,
     )
+
+
 @router.get(
     "/chat/sessions/{session_id}",
     response_model=ChatSessionResponse,
@@ -368,6 +426,8 @@ def get_single_chat_session(
         )
 
     return session
+
+
 @router.put(
     "/chat/sessions/{session_id}",
     response_model=ChatSessionResponse,
@@ -384,25 +444,12 @@ def update_existing_chat_session(
         user_id=current_user.id,
     )
 
-    #if session is None:
-        #raise HTTPException(
-            #status_code=status.HTTP_404_NOT_FOUND,
-            #detail="Chat session not found.",
-        #)
-
     return update_chat_session(
         db=db,
         session=session,
         session_update=session_update,
     )
 
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Chat session not found.",
-        )
-
-    return session
 
 @router.delete(
     "/chat/sessions/{session_id}",
@@ -429,6 +476,7 @@ def delete_existing_chat_session(
         db=db,
         session=session,
     )
+
 
 @router.post(
     "/chat/sessions/{session_id}/messages",
@@ -458,6 +506,7 @@ def create_new_chat_message(
         session_id=session.id,
         message=message,
     )
+
 @router.get(
     "/chat/sessions/{session_id}/messages",
     response_model=list[ChatMessageResponse],
@@ -483,6 +532,7 @@ def get_all_chat_messages(
         db=db,
         session_id=session.id,
     )
+
 
 # =====================================================
 # Knowledge Graph APIs
@@ -550,7 +600,9 @@ def get_people_for_location(location_name: str):
 
 
 @router.get("/graph/organization/{organization_name}/locations")
-def get_locations_for_organization(organization_name: str):
+def get_locations_for_organization(
+    organization_name: str,
+):
     return {
         "organization": organization_name,
         "locations": graph_query_service.get_locations_for_organization(
@@ -560,13 +612,17 @@ def get_locations_for_organization(organization_name: str):
 
 
 @router.get("/graph/location/{location_name}/organizations")
-def get_organizations_for_location(location_name: str):
+def get_organizations_for_location(
+    location_name: str,
+):
     return {
         "location": location_name,
         "organizations": graph_query_service.get_organizations_for_location(
             location_name
         ),
     }
+
+
 @router.get("/memories/today")
 def get_today_memories(
     db: Session = Depends(get_db),
@@ -582,6 +638,7 @@ def get_today_memories(
 
     return memories
 
+
 @router.get("/memories/tomorrow")
 def get_tomorrow_memories(
     db: Session = Depends(get_db),
@@ -596,4 +653,3 @@ def get_tomorrow_memories(
     )
 
     return memories
- 

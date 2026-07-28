@@ -49,7 +49,10 @@ class RankingService:
         else:
             return 0.3
 
-    def calculate_importance(self, text: str) -> float:
+    def calculate_importance(
+        self,
+        text: str,
+    ) -> float:
         """Calculate importance directly from text."""
 
         text = text.lower()
@@ -119,6 +122,63 @@ class RankingService:
         )
 
         return base_score * decay
+
+    def calculate_interaction_score(
+        self,
+        memory: Memory,
+    ) -> float:
+        """
+        Score based on how frequently the user interacts
+        with a memory.
+        """
+
+        access_count = memory.access_count or 0
+
+        if access_count >= 100:
+            return 1.0
+        elif access_count >= 50:
+            return 0.9
+        elif access_count >= 20:
+            return 0.8
+        elif access_count >= 10:
+            return 0.7
+        elif access_count >= 5:
+            return 0.6
+        elif access_count >= 1:
+            return 0.5
+
+        return 0.3
+
+    def calculate_final_score(
+        self,
+        similarity_score: float,
+        memory: Memory,
+    ) -> float:
+        """
+        Final ranking score combining semantic similarity,
+        importance, recency and interaction history.
+        """
+
+        importance_score = self.calculate_importance_score(
+            memory
+        )
+
+        recency_score = self.calculate_recency_score(
+            memory
+        )
+
+        interaction_score = self.calculate_interaction_score(
+            memory
+        )
+
+        final_score = (
+            (similarity_score * 0.50)
+            + (importance_score * 0.20)
+            + (recency_score * 0.15)
+            + (interaction_score * 0.15)
+        )
+
+        return round(final_score, 4)
 
 
 ranking_service = RankingService()

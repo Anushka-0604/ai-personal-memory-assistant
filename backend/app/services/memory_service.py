@@ -215,7 +215,6 @@ def delete_memory(db: Session, memory: Memory):
     db.delete(memory)
     db.commit()
 
-
 # =====================================================
 # Semantic Search
 # =====================================================
@@ -272,10 +271,17 @@ def search_memories(
             )
         )
 
+        interaction_score = (
+            ranking_service.calculate_interaction_score(
+                memory
+            )
+        )
+
         final_score = (
-            similarity_score * 0.6
-            + recency_score * 0.2
-            + importance_score * 0.2
+            ranking_service.calculate_final_score(
+                similarity_score,
+                memory,
+            )
         )
 
         ranked_results.append(
@@ -301,6 +307,10 @@ def search_memories(
                 ),
                 "importance_score": round(
                     importance_score,
+                    4,
+                ),
+                "interaction_score": round(
+                    interaction_score,
                     4,
                 ),
                 "final_score": round(

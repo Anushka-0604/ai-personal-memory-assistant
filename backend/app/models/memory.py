@@ -80,6 +80,12 @@ class Memory(Base):
         back_populates="memories",
     )
 
+    interactions: Mapped[list["UserInteraction"]] = relationship(
+        "UserInteraction",
+        back_populates="memory",
+        cascade="all, delete-orphan",
+    )
+
     # Memory category (Work, Personal, Health, etc.)
     category: Mapped[str | None] = mapped_column(
         String(100),
