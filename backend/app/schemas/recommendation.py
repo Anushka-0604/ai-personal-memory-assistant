@@ -8,6 +8,7 @@ class RecommendedMemory(BaseModel):
     content: str
     category: str | None = None
     importance: float | None = None
+    reason: str
     updated_at: datetime
 
     class Config:
