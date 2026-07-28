@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from ..services.dashboard_service import dashboard_service
 
 from ..schemas.dashboard import DashboardSummary
+from ..services.recommendation_service import recommendation_service
 from ..services.analytics_service import analytics_service
-
+from ..schemas.recommendation import RecommendedMemory
 from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
@@ -370,6 +371,22 @@ def get_dashboard_summary(
     return dashboard_service.get_dashboard_summary(
         db=db,
         user_id=current_user.id,
+    )
+
+
+@router.get(
+    "/recommendations",
+    response_model=list[RecommendedMemory],
+)
+def get_recommendations(
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return recommendation_service.get_recommended_memories(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
     )
 
 
