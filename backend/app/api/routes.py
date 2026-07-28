@@ -3,6 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from ..services.analytics_service import analytics_service
+
+from ..schemas.analytics import (
+    MemoryStatistics,
+    CategoryDistribution,
+)
 from app.services.graph_query_service import graph_query_service
 from app.services.temporal_query_service import temporal_query_service
 
@@ -294,6 +300,8 @@ def update_existing_memory(
     )
 
     return updated_memory
+
+
 @router.post(
     "/memories/search",
     response_model=list[MemorySearchResult],
@@ -320,6 +328,32 @@ def semantic_search(
 
     return results
 
+@router.get(
+    "/analytics/statistics",
+    response_model=MemoryStatistics,
+)
+def get_memory_statistics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return analytics_service.get_memory_statistics(
+        db=db,
+        user_id=current_user.id,
+    )
+
+
+@router.get(
+    "/analytics/categories",
+    response_model=list[CategoryDistribution],
+)
+def get_category_distribution(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return analytics_service.get_category_distribution(
+        db=db,
+        user_id=current_user.id,
+    )
 
 @router.delete(
     "/memories/{memory_id}",
@@ -623,33 +657,5 @@ def get_organizations_for_location(
     }
 
 
-@router.get("/memories/today")
-def get_today_memories(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    today = date.today()
-
-    memories = temporal_query_service.get_memories_for_date(
-        db=db,
-        user_id=current_user.id,
-        target_date=today,
-    )
-
-    return memories
 
 
-@router.get("/memories/tomorrow")
-def get_tomorrow_memories(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    tomorrow = date.today() + timedelta(days=1)
-
-    memories = temporal_query_service.get_memories_for_date(
-        db=db,
-        user_id=current_user.id,
-        target_date=tomorrow,
-    )
-
-    return memories
