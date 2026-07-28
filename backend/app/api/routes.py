@@ -2,7 +2,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from ..services.dashboard_service import dashboard_service
 
+from ..schemas.dashboard import DashboardSummary
 from ..services.analytics_service import analytics_service
 
 from ..schemas.analytics import (
@@ -328,6 +330,7 @@ def semantic_search(
 
     return results
 
+
 @router.get(
     "/analytics/statistics",
     response_model=MemoryStatistics,
@@ -354,6 +357,21 @@ def get_category_distribution(
         db=db,
         user_id=current_user.id,
     )
+
+
+@router.get(
+    "/dashboard/summary",
+    response_model=DashboardSummary,
+)
+def get_dashboard_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return dashboard_service.get_dashboard_summary(
+        db=db,
+        user_id=current_user.id,
+    )
+
 
 @router.delete(
     "/memories/{memory_id}",
