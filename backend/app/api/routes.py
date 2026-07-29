@@ -13,6 +13,7 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from datetime import date
 from ..schemas.timeline import TimelineMemory
 from ..services.timeline_service import timeline_service
 from app.services.graph_query_service import graph_query_service
@@ -415,6 +416,12 @@ def get_review_queue(
 )
 def get_timeline(
     limit: int = 20,
+    page: int = 1,
+    category: str | None = None,
+    search: str | None = None,
+    include_archived: bool = False,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -422,6 +429,12 @@ def get_timeline(
         db=db,
         user_id=current_user.id,
         limit=limit,
+        page=page,
+        category=category,
+        search=search,
+        include_archived=include_archived,
+        start_date=start_date,
+        end_date=end_date,
     )
 
 
