@@ -13,6 +13,8 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..schemas.timeline import TimelineMemory
+from ..services.timeline_service import timeline_service
 from app.services.graph_query_service import graph_query_service
 from app.services.temporal_query_service import temporal_query_service
 
@@ -401,6 +403,22 @@ def get_review_queue(
     current_user: User = Depends(get_current_user),
 ):
     return review_service.get_review_queue(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/timeline",
+    response_model=list[TimelineMemory],
+)
+def get_timeline(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return timeline_service.get_timeline(
         db=db,
         user_id=current_user.id,
         limit=limit,
