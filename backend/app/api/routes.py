@@ -13,6 +13,8 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from app.schemas.insights import MemoryInsights
+from app.services import insights_service
 from datetime import date
 from ..schemas.timeline import TimelineMemory
 from ..services.timeline_service import timeline_service
@@ -373,6 +375,20 @@ def get_dashboard_summary(
     current_user: User = Depends(get_current_user),
 ):
     return dashboard_service.get_dashboard_summary(
+        db=db,
+        user_id=current_user.id,
+    )
+
+
+@router.get(
+    "/insights",
+    response_model=MemoryInsights,
+)
+def get_memory_insights(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return insights_service.get_memory_insights(
         db=db,
         user_id=current_user.id,
     )
