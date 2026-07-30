@@ -317,15 +317,74 @@ def hybrid_search(
 
     merged = {}
 
+    # ------------------------------------------
+    # Semantic Results
+    # ------------------------------------------
+
     for memory, distance in semantic_results:
-        merged[memory.id] = (memory, distance)
 
-    for memory in keyword_results:
-        if memory.id not in merged:
-            merged[memory.id] = (memory, 1.0)
+        similarity = max(0.0, 1 - distance)
 
-    return list(merged.values())
+        merged[memory.id] = {
+            "memory": memory,
+            "distance": distance,
+            "semantic_score": similarity,
+            "keyword_score": 0.0,
+        }
 
+    # ------------------------------------------
+    # Keyword Results
+    # ------------------------------------------
+
+    keyword_count = len(keyword_results)
+
+    for index, memory in enumerate(keyword_results):
+
+        # Higher ranked keyword matches receive
+        # slightly larger scores.
+        keyword_score = (
+            (keyword_count - index)
+            / max(keyword_count, 1)
+        )
+
+        if memory.id in merged:
+
+            merged[memory.id][
+                "keyword_score"
+            ] = keyword_score
+
+        else:
+
+            merged[memory.id] = {
+                "memory": memory,
+                "distance": 1.0,
+                "semantic_score": 0.0,
+                "keyword_score": keyword_score,
+            }
+
+    # ------------------------------------------
+    # Final Hybrid Score
+    # ------------------------------------------
+
+    results = []
+
+    for item in merged.values():
+
+        hybrid_score = (
+            0.7 * item["semantic_score"]
+            + 0.3 * item["keyword_score"]
+        )
+
+        item["hybrid_score"] = hybrid_score
+
+        results.append(item)
+
+    results.sort(
+        key=lambda x: x["hybrid_score"],
+        reverse=True,
+    )
+
+    return results[:top_k]
 
 # =====================================================
 # Search Memories
@@ -346,7 +405,11 @@ def search_memories(
 
     ranked_results = []
 
-    for memory, distance in results:
+    for item in results:
+
+        memory = item["memory"]
+        distance = item["distance"]
+        hybrid_score = item["hybrid_score"]
 
         if archive_service.should_archive(memory):
             archive_service.archive(memory)
@@ -373,9 +436,10 @@ def search_memories(
             )
         )
 
+        # Use hybrid score instead of pure semantic similarity
         final_score = (
             ranking_service.calculate_final_score(
-                similarity_score,
+                hybrid_score,
                 memory,
             )
         )
@@ -386,15 +450,13 @@ def search_memories(
                 "content": memory.content,
                 "source": memory.source,
                 "category": memory.category,
-                "importance": memory.importance,
-                "tags": memory.tags,
-                "sentiment": memory.sentiment,
-                "confidence": memory.confidence,
-                "access_count": memory.access_count,
-                "last_accessed": memory.last_accessed,
                 "temporal_date": memory.temporal_date,
                 "similarity": round(
                     similarity_score,
+                    4,
+                ),
+                "hybrid_score": round(
+                    hybrid_score,
                     4,
                 ),
                 "recency_score": round(

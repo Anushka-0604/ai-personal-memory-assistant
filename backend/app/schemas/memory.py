@@ -39,7 +39,7 @@ class MemoryResponse(BaseModel):
 
 
 # ==========================
-# Semantic Search Schemas
+# Semantic / Hybrid Search Schemas
 # ==========================
 
 class MemorySearchRequest(BaseModel):
@@ -55,7 +55,11 @@ class MemorySearchResult(BaseModel):
     category: str | None = None
     temporal_date: date | None = None
 
+    # Retrieval Scores
     similarity: float
+    hybrid_score: float
+
+    # AI Ranking Scores
     recency_score: float
     importance_score: float
     interaction_score: float
