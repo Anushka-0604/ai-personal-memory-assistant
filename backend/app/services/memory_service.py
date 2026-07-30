@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.memory import Memory
@@ -252,18 +253,38 @@ def semantic_search(
 # Keyword Search
 # =====================================================
 
+from sqlalchemy import func
+
+
 def keyword_search(
     db: Session,
     user_id: int,
     query: str,
     top_k: int = 5,
 ):
+    ts_query = func.plainto_tsquery(
+        "english",
+        query,
+    )
+
     return (
         db.query(Memory)
         .filter(
             Memory.user_id == user_id,
             Memory.is_archived == False,
-            Memory.content.ilike(f"%{query}%"),
+            func.to_tsvector(
+                "english",
+                Memory.content,
+            ).op("@@")(ts_query),
+        )
+        .order_by(
+            func.ts_rank(
+                func.to_tsvector(
+                    "english",
+                    Memory.content,
+                ),
+                ts_query,
+            ).desc()
         )
         .limit(top_k)
         .all()
