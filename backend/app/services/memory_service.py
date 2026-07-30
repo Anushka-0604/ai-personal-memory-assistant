@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
+from app.services.query_rewrite_service import (
+    query_rewrite_service,
+)
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 from app.services.archive_service import archive_service
@@ -301,6 +303,9 @@ def hybrid_search(
     query: str,
     top_k: int = 5,
 ):
+    # Rewrite the user query
+    query = query_rewrite_service.rewrite(query)
+
     semantic_results = semantic_search(
         db=db,
         user_id=user_id,
