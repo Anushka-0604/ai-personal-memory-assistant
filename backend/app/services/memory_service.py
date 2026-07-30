@@ -219,7 +219,7 @@ def delete_memory(db: Session, memory: Memory):
 # Semantic Search
 # =====================================================
 
-def search_memories(
+def semantic_search(
     db: Session,
     user_id: int,
     query: str,
@@ -227,7 +227,7 @@ def search_memories(
 ):
     query_embedding = generate_embedding(query)
 
-    results = (
+    return (
         db.query(
             Memory,
             Memory.embedding.cosine_distance(
@@ -247,17 +247,92 @@ def search_memories(
         .all()
     )
 
+
+# =====================================================
+# Keyword Search
+# =====================================================
+
+def keyword_search(
+    db: Session,
+    user_id: int,
+    query: str,
+    top_k: int = 5,
+):
+    return (
+        db.query(Memory)
+        .filter(
+            Memory.user_id == user_id,
+            Memory.is_archived == False,
+            Memory.content.ilike(f"%{query}%"),
+        )
+        .limit(top_k)
+        .all()
+    )
+
+
+# =====================================================
+# Hybrid Search
+# =====================================================
+
+def hybrid_search(
+    db: Session,
+    user_id: int,
+    query: str,
+    top_k: int = 5,
+):
+    semantic_results = semantic_search(
+        db=db,
+        user_id=user_id,
+        query=query,
+        top_k=top_k,
+    )
+
+    keyword_results = keyword_search(
+        db=db,
+        user_id=user_id,
+        query=query,
+        top_k=top_k,
+    )
+
+    merged = {}
+
+    for memory, distance in semantic_results:
+        merged[memory.id] = (memory, distance)
+
+    for memory in keyword_results:
+        if memory.id not in merged:
+            merged[memory.id] = (memory, 1.0)
+
+    return list(merged.values())
+
+
+# =====================================================
+# Search Memories
+# =====================================================
+
+def search_memories(
+    db: Session,
+    user_id: int,
+    query: str,
+    top_k: int = 5,
+):
+    results = hybrid_search(
+        db=db,
+        user_id=user_id,
+        query=query,
+        top_k=top_k,
+    )
+
     ranked_results = []
 
     for memory, distance in results:
 
-        # Automatically archive memories
         if archive_service.should_archive(memory):
             archive_service.archive(memory)
             db.commit()
             continue
 
-        similarity_score = 1 - distance
+        similarity_score = max(0.0, 1 - distance)
 
         recency_score = (
             ranking_service.calculate_recency_score(
