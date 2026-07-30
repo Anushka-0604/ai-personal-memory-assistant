@@ -2,82 +2,146 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from app.services.query_rewrite_service import (
-    query_rewrite_service,
-)
+
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
+
 from app.services.archive_service import archive_service
-from app.services.classification_service import classification_service
+from app.services.classification_service import (
+    classification_service,
+)
+from app.services.cross_encoder_service import (
+    cross_encoder_service,
+)
 from app.services.duplicate_detection_service import (
     duplicate_detection_service,
 )
-from app.services.embedding_service import generate_embedding
-from app.services.extraction_service import ExtractionService
+from app.services.embedding_service import (
+    generate_embedding,
+)
+from app.services.extraction_service import (
+    ExtractionService,
+)
 from app.services.graph_builder import GraphBuilder
-from app.services.neo4j_service import neo4j_service
-from app.services.ranking_service import ranking_service
-from app.services.sentiment_service import sentiment_service
-from app.services.tag_service import tag_service
-from app.services.temporal_service import temporal_service
+from app.services.neo4j_service import (
+    neo4j_service,
+)
+from app.services.query_rewrite_service import (
+    query_rewrite_service,
+)
+from app.services.ranking_service import (
+    ranking_service,
+)
+from app.services.sentiment_service import (
+    sentiment_service,
+)
+from app.services.tag_service import (
+    tag_service,
+)
+from app.services.temporal_service import (
+    temporal_service,
+)
 
-# Initialize the extraction service
+# =====================================================
+# Initialize Services
+# =====================================================
+
 extraction_service = ExtractionService()
 
-# Initialize the graph builder
 graph_builder = GraphBuilder()
 
+# =====================================================
+# Create Memory
+# =====================================================
 
-def create_memory(db: Session, user_id: int, memory: MemoryCreate):
+def create_memory(
+    db: Session,
+    user_id: int,
+    memory: MemoryCreate,
+):
+    # ------------------------------------------
     # Extract structured information
-    extraction = extraction_service.extract(memory.content)
+    # ------------------------------------------
 
+    extraction = extraction_service.extract(
+        memory.content
+    )
+
+    # ------------------------------------------
     # Extract temporal information
+    # ------------------------------------------
+
     temporal_date = temporal_service.extract_date(
         memory.content
     )
 
+    # ------------------------------------------
     # Classify memory
+    # ------------------------------------------
+
     category = classification_service.classify(
         memory.content
     )
 
+    # ------------------------------------------
     # Calculate importance
+    # ------------------------------------------
+
     importance = ranking_service.calculate_importance(
         memory.content
     )
 
+    # ------------------------------------------
     # Generate tags
-    tags = tag_service.generate_tags(extraction)
+    # ------------------------------------------
 
-    # Analyze sentiment
-    sentiment, confidence = sentiment_service.analyze(
-        memory.content
+    tags = tag_service.generate_tags(
+        extraction
     )
 
-    # Build knowledge graph
-    graph = graph_builder.build(extraction)
+    # ------------------------------------------
+    # Analyze sentiment
+    # ------------------------------------------
 
-    # Save graph to Neo4j
+    sentiment, confidence = (
+        sentiment_service.analyze(
+            memory.content
+        )
+    )
+
+    # ------------------------------------------
+    # Build Knowledge Graph
+    # ------------------------------------------
+
+    graph = graph_builder.build(
+        extraction
+    )
+
     neo4j_service.save_graph(graph)
 
-    # -----------------------------------------------------
+    # ------------------------------------------
     # Duplicate Detection
-    # -----------------------------------------------------
+    # ------------------------------------------
 
-    duplicate = duplicate_detection_service.find_duplicate(
-        db=db,
-        user_id=user_id,
-        content=memory.content,
+    duplicate = (
+        duplicate_detection_service.find_duplicate(
+            db=db,
+            user_id=user_id,
+            content=memory.content,
+        )
     )
 
     if duplicate["is_duplicate"]:
 
         existing_memory = duplicate["memory"]
 
-        # Increase importance slightly
+        # Increase importance
         existing_memory.importance = min(
-            (existing_memory.importance or 0.5) + 0.05,
+            (
+                existing_memory.importance
+                or 0.5
+            )
+            + 0.05,
             1.0,
         )
 
@@ -85,8 +149,10 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
         existing_memory.evidence_count += 1
 
         # Refresh timestamp
-        existing_memory.updated_at = datetime.now(
-            timezone.utc
+        existing_memory.updated_at = (
+            datetime.now(
+                timezone.utc
+            )
         )
 
         db.commit()
@@ -94,8 +160,17 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
 
         return existing_memory
 
-    # Generate vector embedding
-    embedding = generate_embedding(memory.content)
+    # ------------------------------------------
+    # Generate embedding
+    # ------------------------------------------
+
+    embedding = generate_embedding(
+        memory.content
+    )
+
+    # ------------------------------------------
+    # Create memory
+    # ------------------------------------------
 
     new_memory = Memory(
         user_id=user_id,
@@ -112,19 +187,33 @@ def create_memory(db: Session, user_id: int, memory: MemoryCreate):
     )
 
     db.add(new_memory)
+
     db.commit()
+
     db.refresh(new_memory)
 
     return new_memory
 
+# =====================================================
+# Get All Memories
+# =====================================================
 
-def get_memories(db: Session, user_id: int):
+def get_memories(
+    db: Session,
+    user_id: int,
+):
     return (
         db.query(Memory)
-        .filter(Memory.user_id == user_id)
+        .filter(
+            Memory.user_id == user_id
+        )
         .all()
     )
 
+
+# =====================================================
+# Get Memory By ID
+# =====================================================
 
 def get_memory_by_id(
     db: Session,
@@ -152,55 +241,98 @@ def get_memory_by_id(
     return memory
 
 
+# =====================================================
+# Update Memory
+# =====================================================
+
 def update_memory(
     db: Session,
     memory: Memory,
     memory_update: MemoryUpdate,
 ):
+    # ------------------------------------------
+    # Update basic fields
+    # ------------------------------------------
+
     memory.content = memory_update.content
     memory.source = memory_update.source
 
-    # Re-extract metadata
+    # ------------------------------------------
+    # Extract structured information
+    # ------------------------------------------
+
     extraction = extraction_service.extract(
         memory.content
     )
 
-    # Re-extract temporal information
+    # ------------------------------------------
+    # Extract temporal information
+    # ------------------------------------------
+
     temporal_date = temporal_service.extract_date(
         memory.content
     )
 
-    # Re-classify
+    # ------------------------------------------
+    # Re-classify memory
+    # ------------------------------------------
+
     category = classification_service.classify(
         memory.content
     )
 
+    # ------------------------------------------
     # Recalculate importance
+    # ------------------------------------------
+
     importance = ranking_service.calculate_importance(
         memory.content
     )
 
+    # ------------------------------------------
     # Regenerate tags
-    tags = tag_service.generate_tags(extraction)
+    # ------------------------------------------
 
-    # Recalculate sentiment
-    sentiment, confidence = sentiment_service.analyze(
-        memory.content
+    tags = tag_service.generate_tags(
+        extraction
     )
 
-    # Rebuild knowledge graph
-    graph = graph_builder.build(extraction)
+    # ------------------------------------------
+    # Analyze sentiment
+    # ------------------------------------------
 
-    # Update graph in Neo4j
+    sentiment, confidence = (
+        sentiment_service.analyze(
+            memory.content
+        )
+    )
+
+    # ------------------------------------------
+    # Update Knowledge Graph
+    # ------------------------------------------
+
+    graph = graph_builder.build(
+        extraction
+    )
+
     neo4j_service.save_graph(graph)
 
+    # ------------------------------------------
     # Regenerate embedding
+    # ------------------------------------------
+
     memory.embedding = generate_embedding(
         memory.content
     )
 
+    # ------------------------------------------
     # Update metadata
-    memory.extracted_data = extraction.model_dump()
+    # ------------------------------------------
+
+    memory.extracted_data = (
+        extraction.model_dump()
+    )
+
     memory.temporal_date = temporal_date
     memory.category = category
     memory.importance = importance
@@ -214,7 +346,14 @@ def update_memory(
     return memory
 
 
-def delete_memory(db: Session, memory: Memory):
+# =====================================================
+# Delete Memory
+# =====================================================
+
+def delete_memory(
+    db: Session,
+    memory: Memory,
+):
     db.delete(memory)
     db.commit()
 
@@ -255,9 +394,6 @@ def semantic_search(
 # Keyword Search
 # =====================================================
 
-from sqlalchemy import func
-
-
 def keyword_search(
     db: Session,
     user_id: int,
@@ -292,7 +428,6 @@ def keyword_search(
         .all()
     )
 
-
 # =====================================================
 # Hybrid Search
 # =====================================================
@@ -303,8 +438,17 @@ def hybrid_search(
     query: str,
     top_k: int = 5,
 ):
+    # ------------------------------------------
     # Rewrite the user query
-    query = query_rewrite_service.rewrite(query)
+    # ------------------------------------------
+
+    query = query_rewrite_service.rewrite(
+        query
+    )
+
+    # ------------------------------------------
+    # Perform Semantic Search
+    # ------------------------------------------
 
     semantic_results = semantic_search(
         db=db,
@@ -312,6 +456,10 @@ def hybrid_search(
         query=query,
         top_k=top_k,
     )
+
+    # ------------------------------------------
+    # Perform Keyword Search
+    # ------------------------------------------
 
     keyword_results = keyword_search(
         db=db,
@@ -323,12 +471,15 @@ def hybrid_search(
     merged = {}
 
     # ------------------------------------------
-    # Semantic Results
+    # Process Semantic Results
     # ------------------------------------------
 
     for memory, distance in semantic_results:
 
-        similarity = max(0.0, 1 - distance)
+        similarity = max(
+            0.0,
+            1 - distance,
+        )
 
         merged[memory.id] = {
             "memory": memory,
@@ -338,15 +489,17 @@ def hybrid_search(
         }
 
     # ------------------------------------------
-    # Keyword Results
+    # Process Keyword Results
     # ------------------------------------------
 
-    keyword_count = len(keyword_results)
+    keyword_count = len(
+        keyword_results
+    )
 
-    for index, memory in enumerate(keyword_results):
+    for index, memory in enumerate(
+        keyword_results
+    ):
 
-        # Higher ranked keyword matches receive
-        # slightly larger scores.
         keyword_score = (
             (keyword_count - index)
             / max(keyword_count, 1)
@@ -368,7 +521,7 @@ def hybrid_search(
             }
 
     # ------------------------------------------
-    # Final Hybrid Score
+    # Calculate Hybrid Score
     # ------------------------------------------
 
     results = []
@@ -384,8 +537,75 @@ def hybrid_search(
 
         results.append(item)
 
+    # ------------------------------------------
+    # Prepare Memory Texts
+    # ------------------------------------------
+
+    memory_texts = [
+        item["memory"].content
+        for item in results
+    ]
+
+    # ------------------------------------------
+    # CrossEncoder Re-ranking
+    # ------------------------------------------
+
+    cross_scores = cross_encoder_service.rerank(
+        query=query,
+        memories=memory_texts,
+    )
+
+    # ------------------------------------------
+    # Normalize CrossEncoder Scores (0 - 1)
+    # ------------------------------------------
+
+    if cross_scores:
+
+        min_score = min(cross_scores)
+        max_score = max(cross_scores)
+
+        if max_score == min_score:
+
+            normalized_scores = [
+                1.0
+            ] * len(cross_scores)
+
+        else:
+
+            normalized_scores = [
+                (score - min_score)
+                / (max_score - min_score)
+                for score in cross_scores
+            ]
+
+    else:
+
+        normalized_scores = []
+
+    # ------------------------------------------
+    # Combine Hybrid + CrossEncoder
+    # ------------------------------------------
+
+    for item, cross_score in zip(
+        results,
+        normalized_scores,
+    ):
+
+        item["cross_encoder_score"] = float(
+            cross_score
+        )
+
+        item["retrieval_score"] = (
+            0.6 * item["hybrid_score"]
+            + 0.4 * float(cross_score)
+        )
+
+    # ------------------------------------------
+    # Sort by Retrieval Score
+    # ------------------------------------------
+
     results.sort(
-        key=lambda x: x["hybrid_score"],
+        key=lambda x: x["retrieval_score"],
         reverse=True,
     )
 
@@ -420,32 +640,47 @@ def search_memories(
         memory = item["memory"]
         distance = item["distance"]
         hybrid_score = item["hybrid_score"]
+        cross_encoder_score = item[
+            "cross_encoder_score"
+        ]
+        retrieval_score = item[
+            "retrieval_score"
+        ]
 
         # --------------------------------------
         # Metadata Filters
         # --------------------------------------
 
-        if category and memory.category != category:
+        if (
+            category
+            and memory.category != category
+        ):
             continue
 
-        if sentiment and memory.sentiment != sentiment:
+        if (
+            sentiment
+            and memory.sentiment != sentiment
+        ):
             continue
 
         if start_date:
             if (
                 memory.temporal_date is None
-                or memory.temporal_date < start_date
+                or memory.temporal_date
+                < start_date
             ):
                 continue
 
         if end_date:
             if (
                 memory.temporal_date is None
-                or memory.temporal_date > end_date
+                or memory.temporal_date
+                > end_date
             ):
                 continue
 
         if tags:
+
             memory_tags = memory.tags or []
 
             if not any(
@@ -455,11 +690,19 @@ def search_memories(
                 continue
 
         # --------------------------------------
+        # Archive old memories
+        # --------------------------------------
 
-        if archive_service.should_archive(memory):
+        if archive_service.should_archive(
+            memory
+        ):
             archive_service.archive(memory)
             db.commit()
             continue
+
+        # --------------------------------------
+        # Individual Scores
+        # --------------------------------------
 
         similarity_score = max(
             0.0,
@@ -484,9 +727,13 @@ def search_memories(
             )
         )
 
+        # --------------------------------------
+        # Final Score
+        # --------------------------------------
+
         final_score = (
             ranking_service.calculate_final_score(
-                hybrid_score,
+                retrieval_score,
                 memory,
             )
         )
@@ -504,6 +751,14 @@ def search_memories(
                 ),
                 "hybrid_score": round(
                     hybrid_score,
+                    4,
+                ),
+                "cross_encoder_score": round(
+                    cross_encoder_score,
+                    4,
+                ),
+                "retrieval_score": round(
+                    retrieval_score,
                     4,
                 ),
                 "recency_score": round(
