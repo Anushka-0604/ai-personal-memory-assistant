@@ -325,6 +325,11 @@ def semantic_search(
         user_id=current_user.id,
         query=request.query,
         top_k=request.top_k,
+        category=request.category,
+        sentiment=request.sentiment,
+        tags=request.tags,
+        start_date=request.start_date,
+        end_date=request.end_date,
     )
 
     for memory in results:

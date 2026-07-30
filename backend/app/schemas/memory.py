@@ -46,6 +46,14 @@ class MemorySearchRequest(BaseModel):
     query: str
     top_k: int = 5
 
+    # Optional Metadata Filters
+    category: str | None = None
+    sentiment: str | None = None
+    tags: list[str] | None = None
+
+    start_date: date | None = None
+    end_date: date | None = None
+
 
 class MemorySearchResult(BaseModel):
     id: int

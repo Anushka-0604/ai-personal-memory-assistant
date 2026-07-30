@@ -395,6 +395,11 @@ def search_memories(
     user_id: int,
     query: str,
     top_k: int = 5,
+    category: str | None = None,
+    sentiment: str | None = None,
+    tags: list[str] | None = None,
+    start_date=None,
+    end_date=None,
 ):
     results = hybrid_search(
         db=db,
@@ -411,12 +416,50 @@ def search_memories(
         distance = item["distance"]
         hybrid_score = item["hybrid_score"]
 
+        # --------------------------------------
+        # Metadata Filters
+        # --------------------------------------
+
+        if category and memory.category != category:
+            continue
+
+        if sentiment and memory.sentiment != sentiment:
+            continue
+
+        if start_date:
+            if (
+                memory.temporal_date is None
+                or memory.temporal_date < start_date
+            ):
+                continue
+
+        if end_date:
+            if (
+                memory.temporal_date is None
+                or memory.temporal_date > end_date
+            ):
+                continue
+
+        if tags:
+            memory_tags = memory.tags or []
+
+            if not any(
+                tag in memory_tags
+                for tag in tags
+            ):
+                continue
+
+        # --------------------------------------
+
         if archive_service.should_archive(memory):
             archive_service.archive(memory)
             db.commit()
             continue
 
-        similarity_score = max(0.0, 1 - distance)
+        similarity_score = max(
+            0.0,
+            1 - distance,
+        )
 
         recency_score = (
             ranking_service.calculate_recency_score(
@@ -436,7 +479,6 @@ def search_memories(
             )
         )
 
-        # Use hybrid score instead of pure semantic similarity
         final_score = (
             ranking_service.calculate_final_score(
                 hybrid_score,
