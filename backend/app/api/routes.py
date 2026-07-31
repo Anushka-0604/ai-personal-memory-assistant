@@ -325,6 +325,7 @@ def semantic_search(
         user_id=current_user.id,
         query=request.query,
         top_k=request.top_k,
+        conversation_history=request.conversation_history,
         category=request.category,
         sentiment=request.sentiment,
         tags=request.tags,

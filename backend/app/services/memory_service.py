@@ -7,8 +7,9 @@ from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 
 from app.services.archive_service import archive_service
-from app.services.classification_service import (
-    classification_service,
+from app.services.classification_service import classification_service
+from app.services.context_retrieval_service import (
+    context_retrieval_service,
 )
 from app.services.cross_encoder_service import (
     cross_encoder_service,
@@ -65,49 +66,25 @@ def create_memory(
     user_id: int,
     memory: MemoryCreate,
 ):
-    # ------------------------------------------
-    # Extract structured information
-    # ------------------------------------------
-
     extraction = extraction_service.extract(
         memory.content
     )
-
-    # ------------------------------------------
-    # Extract temporal information
-    # ------------------------------------------
 
     temporal_date = temporal_service.extract_date(
         memory.content
     )
 
-    # ------------------------------------------
-    # Classify memory
-    # ------------------------------------------
-
     category = classification_service.classify(
         memory.content
     )
-
-    # ------------------------------------------
-    # Calculate importance
-    # ------------------------------------------
 
     importance = ranking_service.calculate_importance(
         memory.content
     )
 
-    # ------------------------------------------
-    # Generate tags
-    # ------------------------------------------
-
     tags = tag_service.generate_tags(
         extraction
     )
-
-    # ------------------------------------------
-    # Analyze sentiment
-    # ------------------------------------------
 
     sentiment, confidence = (
         sentiment_service.analyze(
@@ -115,19 +92,15 @@ def create_memory(
         )
     )
 
-    # ------------------------------------------
-    # Build Knowledge Graph
-    # ------------------------------------------
+    try:
+        graph = graph_builder.build(
+            extraction
+        )
 
-    graph = graph_builder.build(
-        extraction
-    )
+        neo4j_service.save_graph(graph)
 
-    neo4j_service.save_graph(graph)
-
-    # ------------------------------------------
-    # Duplicate Detection
-    # ------------------------------------------
+    except Exception as e:
+        print(f"[WARNING] Neo4j unavailable: {e}")
 
     duplicate = (
         duplicate_detection_service.find_duplicate(
@@ -163,17 +136,9 @@ def create_memory(
 
         return existing_memory
 
-    # ------------------------------------------
-    # Generate embedding
-    # ------------------------------------------
-
     embedding = generate_embedding(
         memory.content
     )
-
-    # ------------------------------------------
-    # Create memory
-    # ------------------------------------------
 
     new_memory = Memory(
         user_id=user_id,
@@ -241,6 +206,7 @@ def get_memory_by_id(
         db.refresh(memory)
 
     return memory
+
 # =====================================================
 # Update Memory
 # =====================================================
@@ -250,56 +216,28 @@ def update_memory(
     memory: Memory,
     memory_update: MemoryUpdate,
 ):
-    # ------------------------------------------
-    # Update basic fields
-    # ------------------------------------------
-
     memory.content = memory_update.content
     memory.source = memory_update.source
-
-    # ------------------------------------------
-    # Extract structured information
-    # ------------------------------------------
 
     extraction = extraction_service.extract(
         memory.content
     )
 
-    # ------------------------------------------
-    # Extract temporal information
-    # ------------------------------------------
-
     temporal_date = temporal_service.extract_date(
         memory.content
     )
-
-    # ------------------------------------------
-    # Re-classify memory
-    # ------------------------------------------
 
     category = classification_service.classify(
         memory.content
     )
 
-    # ------------------------------------------
-    # Recalculate importance
-    # ------------------------------------------
-
     importance = ranking_service.calculate_importance(
         memory.content
     )
 
-    # ------------------------------------------
-    # Regenerate tags
-    # ------------------------------------------
-
     tags = tag_service.generate_tags(
         extraction
     )
-
-    # ------------------------------------------
-    # Analyze sentiment
-    # ------------------------------------------
 
     sentiment, confidence = (
         sentiment_service.analyze(
@@ -307,27 +245,19 @@ def update_memory(
         )
     )
 
-    # ------------------------------------------
-    # Update Knowledge Graph
-    # ------------------------------------------
+    try:
+        graph = graph_builder.build(
+            extraction
+        )
 
-    graph = graph_builder.build(
-        extraction
-    )
+        neo4j_service.save_graph(graph)
 
-    neo4j_service.save_graph(graph)
-
-    # ------------------------------------------
-    # Regenerate embedding
-    # ------------------------------------------
+    except Exception as e:
+        print(f"[WARNING] Neo4j unavailable: {e}")
 
     memory.embedding = generate_embedding(
         memory.content
     )
-
-    # ------------------------------------------
-    # Update metadata
-    # ------------------------------------------
 
     memory.extracted_data = (
         extraction.model_dump()
@@ -368,7 +298,9 @@ def semantic_search(
     query: str,
     top_k: int = 5,
 ):
-    query_embedding = generate_embedding(query)
+    query_embedding = generate_embedding(
+        query
+    )
 
     return (
         db.query(
@@ -429,7 +361,6 @@ def keyword_search(
         .all()
     )
 
-
 # =====================================================
 # Hybrid Search
 # =====================================================
@@ -439,9 +370,19 @@ def hybrid_search(
     user_id: int,
     query: str,
     top_k: int = 5,
+    conversation_history: list[str] | None = None,
 ):
     # ------------------------------------------
-    # Rewrite the user query
+    # Build Context-Aware Query (Module 9.10)
+    # ------------------------------------------
+
+    query = context_retrieval_service.build_query(
+        query=query,
+        history=conversation_history,
+    )
+
+    # ------------------------------------------
+    # Rewrite Query
     # ------------------------------------------
 
     query = query_rewrite_service.rewrite(
@@ -449,7 +390,7 @@ def hybrid_search(
     )
 
     # ------------------------------------------
-    # Perform Semantic Search
+    # Semantic Search
     # ------------------------------------------
 
     semantic_results = semantic_search(
@@ -460,7 +401,7 @@ def hybrid_search(
     )
 
     # ------------------------------------------
-    # Perform Keyword Search
+    # Keyword Search
     # ------------------------------------------
 
     keyword_results = keyword_search(
@@ -540,10 +481,13 @@ def hybrid_search(
         results.append(item)
 
     # ------------------------------------------
-    # Keep only the best candidates for reranking
+    # Keep Best Candidates
     # ------------------------------------------
 
-    RERANK_TOP_K = max(top_k * 2, 10)
+    RERANK_TOP_K = max(
+        top_k * 2,
+        10,
+    )
 
     results.sort(
         key=lambda x: x["hybrid_score"],
@@ -551,11 +495,14 @@ def hybrid_search(
     )
 
     results = results[
-        : min(RERANK_TOP_K, len(results))
+        : min(
+            RERANK_TOP_K,
+            len(results),
+        )
     ]
 
     # ------------------------------------------
-    # Skip CrossEncoder if unnecessary
+    # Skip CrossEncoder
     # ------------------------------------------
 
     if len(results) <= 1:
@@ -564,13 +511,13 @@ def hybrid_search(
 
             item["cross_encoder_score"] = 1.0
 
-            item["retrieval_score"] = item[
-                "hybrid_score"
-            ]
+            item["retrieval_score"] = (
+                item["hybrid_score"]
+            )
 
         return results
 
-    # ------------------------------------------
+        # ------------------------------------------
     # Prepare Memory Texts
     # ------------------------------------------
 
@@ -589,7 +536,7 @@ def hybrid_search(
     )
 
     # ------------------------------------------
-    # Normalize CrossEncoder Scores (0 - 1)
+    # Normalize CrossEncoder Scores
     # ------------------------------------------
 
     if cross_scores:
@@ -613,10 +560,12 @@ def hybrid_search(
 
     else:
 
-        normalized_scores = []
+        normalized_scores = [
+            1.0
+        ] * len(results)
 
     # ------------------------------------------
-    # Combine Hybrid + CrossEncoder
+    # Combine Scores
     # ------------------------------------------
 
     for item, cross_score in zip(
@@ -633,9 +582,9 @@ def hybrid_search(
             + 0.4 * float(cross_score)
         )
 
-        # ------------------------------------------
-        # Personalized Retrieval (Module 9.9)
-        # ------------------------------------------
+        # --------------------------------------
+        # Personalized Retrieval
+        # --------------------------------------
 
         personalization_score = (
             personalization_service.calculate_score(
@@ -674,7 +623,7 @@ def hybrid_search(
     )
 
     # ------------------------------------------
-    # Sort Again
+    # Final Sort
     # ------------------------------------------
 
     results.sort(
@@ -694,6 +643,7 @@ def search_memories(
     user_id: int,
     query: str,
     top_k: int = 5,
+    conversation_history: list[str] | None = None,
     category: str | None = None,
     sentiment: str | None = None,
     tags: list[str] | None = None,
@@ -705,6 +655,7 @@ def search_memories(
         user_id=user_id,
         query=query,
         top_k=top_k,
+        conversation_history=conversation_history,
     )
 
     ranked_results = []
@@ -714,12 +665,8 @@ def search_memories(
         memory = item["memory"]
         distance = item["distance"]
         hybrid_score = item["hybrid_score"]
-        cross_encoder_score = item[
-            "cross_encoder_score"
-        ]
-        retrieval_score = item[
-            "retrieval_score"
-        ]
+        cross_encoder_score = item["cross_encoder_score"]
+        retrieval_score = item["retrieval_score"]
 
         personalization_score = item.get(
             "personalization_score",
@@ -745,16 +692,14 @@ def search_memories(
         if start_date:
             if (
                 memory.temporal_date is None
-                or memory.temporal_date
-                < start_date
+                or memory.temporal_date < start_date
             ):
                 continue
 
         if end_date:
             if (
                 memory.temporal_date is None
-                or memory.temporal_date
-                > end_date
+                or memory.temporal_date > end_date
             ):
                 continue
 

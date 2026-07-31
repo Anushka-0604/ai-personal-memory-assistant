@@ -46,7 +46,9 @@ class MemorySearchRequest(BaseModel):
     query: str
     top_k: int = 5
 
-    # Optional Metadata Filters
+    # Module 9.10
+    conversation_history: list[str] | None = None
+
     category: str | None = None
     sentiment: str | None = None
     tags: list[str] | None = None
