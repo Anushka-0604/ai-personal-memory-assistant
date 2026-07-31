@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-
+from app.services.diversification_service import (
+    diversification_service,
+)
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -631,6 +633,23 @@ def hybrid_search(
 
     # ------------------------------------------
     # Sort by Retrieval Score
+    # ------------------------------------------
+
+    results.sort(
+        key=lambda x: x["retrieval_score"],
+        reverse=True,
+    )
+
+    # ------------------------------------------
+    # Diversify Results
+    # ------------------------------------------
+
+    results = diversification_service.diversify(
+        results
+    )
+
+    # ------------------------------------------
+    # Sort Again
     # ------------------------------------------
 
     results.sort(
