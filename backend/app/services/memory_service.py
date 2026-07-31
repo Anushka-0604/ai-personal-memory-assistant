@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
-from app.services.diversification_service import (
-    diversification_service,
-)
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -15,6 +13,9 @@ from app.services.classification_service import (
 from app.services.cross_encoder_service import (
     cross_encoder_service,
 )
+from app.services.diversification_service import (
+    diversification_service,
+)
 from app.services.duplicate_detection_service import (
     duplicate_detection_service,
 )
@@ -27,6 +28,9 @@ from app.services.extraction_service import (
 from app.services.graph_builder import GraphBuilder
 from app.services.neo4j_service import (
     neo4j_service,
+)
+from app.services.personalization_service import (
+    personalization_service,
 )
 from app.services.query_rewrite_service import (
     query_rewrite_service,
@@ -137,7 +141,6 @@ def create_memory(
 
         existing_memory = duplicate["memory"]
 
-        # Increase importance
         existing_memory.importance = min(
             (
                 existing_memory.importance
@@ -147,10 +150,8 @@ def create_memory(
             1.0,
         )
 
-        # Increase evidence count
         existing_memory.evidence_count += 1
 
-        # Refresh timestamp
         existing_memory.updated_at = (
             datetime.now(
                 timezone.utc
@@ -212,7 +213,6 @@ def get_memories(
         .all()
     )
 
-
 # =====================================================
 # Get Memory By ID
 # =====================================================
@@ -241,8 +241,6 @@ def get_memory_by_id(
         db.refresh(memory)
 
     return memory
-
-
 # =====================================================
 # Update Memory
 # =====================================================
@@ -359,6 +357,7 @@ def delete_memory(
     db.delete(memory)
     db.commit()
 
+
 # =====================================================
 # Semantic Search
 # =====================================================
@@ -429,6 +428,7 @@ def keyword_search(
         .limit(top_k)
         .all()
     )
+
 
 # =====================================================
 # Hybrid Search
@@ -538,6 +538,7 @@ def hybrid_search(
         item["hybrid_score"] = hybrid_score
 
         results.append(item)
+
     # ------------------------------------------
     # Keep only the best candidates for reranking
     # ------------------------------------------
@@ -568,6 +569,7 @@ def hybrid_search(
             ]
 
         return results
+
     # ------------------------------------------
     # Prepare Memory Texts
     # ------------------------------------------
@@ -626,9 +628,32 @@ def hybrid_search(
             cross_score
         )
 
-        item["retrieval_score"] = (
+        retrieval_score = (
             0.6 * item["hybrid_score"]
             + 0.4 * float(cross_score)
+        )
+
+        # ------------------------------------------
+        # Personalized Retrieval (Module 9.9)
+        # ------------------------------------------
+
+        personalization_score = (
+            personalization_service.calculate_score(
+                item["memory"]
+            )
+        )
+
+        retrieval_score = (
+            0.8 * retrieval_score
+            + 0.2 * personalization_score
+        )
+
+        item["personalization_score"] = (
+            personalization_score
+        )
+
+        item["retrieval_score"] = (
+            retrieval_score
         )
 
     # ------------------------------------------
@@ -658,6 +683,7 @@ def hybrid_search(
     )
 
     return results[:top_k]
+
 
 # =====================================================
 # Search Memories
@@ -694,6 +720,11 @@ def search_memories(
         retrieval_score = item[
             "retrieval_score"
         ]
+
+        personalization_score = item.get(
+            "personalization_score",
+            0.0,
+        )
 
         # --------------------------------------
         # Metadata Filters
@@ -807,6 +838,10 @@ def search_memories(
                 ),
                 "retrieval_score": round(
                     retrieval_score,
+                    4,
+                ),
+                "personalization_score": round(
+                    personalization_score,
                     4,
                 ),
                 "recency_score": round(

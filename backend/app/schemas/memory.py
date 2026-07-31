@@ -68,6 +68,8 @@ class MemorySearchResult(BaseModel):
     hybrid_score: float
     cross_encoder_score: float
     retrieval_score: float
+    personalization_score: float
+
     # AI Ranking Scores
     recency_score: float
     importance_score: float
