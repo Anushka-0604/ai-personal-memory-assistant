@@ -536,7 +536,36 @@ def hybrid_search(
         item["hybrid_score"] = hybrid_score
 
         results.append(item)
+    # ------------------------------------------
+    # Keep only the best candidates for reranking
+    # ------------------------------------------
 
+    RERANK_TOP_K = max(top_k * 2, 10)
+
+    results.sort(
+        key=lambda x: x["hybrid_score"],
+        reverse=True,
+    )
+
+    results = results[
+        : min(RERANK_TOP_K, len(results))
+    ]
+
+    # ------------------------------------------
+    # Skip CrossEncoder if unnecessary
+    # ------------------------------------------
+
+    if len(results) <= 1:
+
+        for item in results:
+
+            item["cross_encoder_score"] = 1.0
+
+            item["retrieval_score"] = item[
+                "hybrid_score"
+            ]
+
+        return results
     # ------------------------------------------
     # Prepare Memory Texts
     # ------------------------------------------
