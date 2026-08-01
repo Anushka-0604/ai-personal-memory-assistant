@@ -14,6 +14,12 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..services.usage_dashboard_service import (
+    usage_dashboard_service,
+)
+from ..schemas.usage_dashboard import (
+    UsageDashboard,
+)
 from ..services.retrieval_quality_service import (
     retrieval_quality_service,
 )
@@ -872,6 +878,19 @@ def get_retrieval_quality(
     current_user: User = Depends(get_current_user),
 ):
     return retrieval_quality_service.calculate_quality(
+        db=db,
+        user_id=current_user.id,
+    )
+
+@router.get(
+    "/analytics/usage-dashboard",
+    response_model=UsageDashboard,
+)
+def get_usage_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return usage_dashboard_service.get_dashboard(
         db=db,
         user_id=current_user.id,
     )
