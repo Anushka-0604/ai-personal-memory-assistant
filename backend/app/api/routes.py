@@ -6,6 +6,7 @@ from ..services.dashboard_service import dashboard_service
 from ..services.review_service import review_service
 from ..schemas.review import ReviewMemory
 from ..schemas.dashboard import DashboardSummary
+from ..services.health_service import health_service
 from ..services.recommendation_service import recommendation_service
 from ..services.analytics_service import analytics_service
 from ..schemas.recommendation import RecommendedMemory
@@ -848,3 +849,10 @@ def get_system_metrics(
         .limit(limit)
         .all()
     )
+
+@router.get("/system/health")
+def system_health(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return health_service.get_health(db)
