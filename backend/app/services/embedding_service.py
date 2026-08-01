@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
+from app.services.cache_service import cache_service
+
 load_dotenv()
 
 MODEL_NAME = os.getenv(
@@ -11,6 +13,7 @@ MODEL_NAME = os.getenv(
 )
 
 from app.core.logger import logger
+
 logger.info(f"Loading embedding model: {MODEL_NAME}")
 
 model = SentenceTransformer(
@@ -25,8 +28,29 @@ def generate_embedding(text: str) -> list[float]:
     """
     Generate a vector embedding for the given text.
     """
+
+    # -------------------------------
+    # Check Cache
+    # -------------------------------
+    cached_embedding = cache_service.get_embedding(text)
+
+    if cached_embedding is not None:
+        return cached_embedding
+
+    # -------------------------------
+    # Generate Embedding
+    # -------------------------------
     embedding = model.encode(
         text,
         convert_to_numpy=True,
+    ).tolist()
+
+    # -------------------------------
+    # Store in Cache
+    # -------------------------------
+    cache_service.set_embedding(
+        text,
+        embedding,
     )
-    return embedding.tolist()
+
+    return embedding

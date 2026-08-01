@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-
+from app.services.cache_service import cache_service
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
 
@@ -372,6 +372,19 @@ def hybrid_search(
     top_k: int = 5,
     conversation_history: list[str] | None = None,
 ):
+
+    # ------------------------------------------
+    # Search Cache
+    # ------------------------------------------
+
+    cache_key = f"{user_id}:{query}:{top_k}"
+
+    cached_results = cache_service.get_search(
+        cache_key
+    )
+
+    if cached_results is not None:
+        return cached_results
     # ------------------------------------------
     # Build Context-Aware Query (Module 9.10)
     # ------------------------------------------
@@ -515,6 +528,11 @@ def hybrid_search(
                 item["hybrid_score"]
             )
 
+        cache_service.set_search(
+            cache_key,
+            results,
+        )
+
         return results
 
         # ------------------------------------------
@@ -631,7 +649,14 @@ def hybrid_search(
         reverse=True,
     )
 
-    return results[:top_k]
+    results = results[:top_k]
+
+    cache_service.set_search(
+        cache_key,
+        results,
+    )
+
+    return results
 
 
 # =====================================================
