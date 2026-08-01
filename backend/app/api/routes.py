@@ -13,6 +13,7 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..models.system_metric import SystemMetric
 from ..services.retrieval_analytics_service import (
     retrieval_analytics_service,
 )
@@ -832,6 +833,18 @@ def get_retrieval_logs(
         db.query(RetrievalLog)
         .filter(RetrievalLog.user_id == current_user.id)
         .order_by(RetrievalLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+@router.get("/analytics/system-metrics")
+def get_system_metrics(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return (
+        db.query(SystemMetric)
+        .order_by(SystemMetric.created_at.desc())
         .limit(limit)
         .all()
     )

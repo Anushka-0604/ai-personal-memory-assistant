@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from app.services.retrieval_analytics_service import (
     retrieval_analytics_service,
 )
+from app.services.system_metric_service import (
+    system_metric_service,
+)
 from app.core.config import (
     CONVERSATION_HISTORY_LIMIT,
     RAG_SIMILARITY_THRESHOLD,
@@ -198,6 +201,30 @@ class ChatService:
                     time.perf_counter() - total_start
                 ) * 1000,
             )
+
+            system_metric_service.log(
+                db=db,
+                metric_name="llm_response_time",
+                metric_value=llm_time,
+                unit="ms",
+            )
+
+            system_metric_service.log(
+                db=db,
+                metric_name="retrieval_time",
+                metric_value=retrieval_time,
+                unit="ms",
+            )
+
+            system_metric_service.log(
+                db=db,
+                metric_name="total_request_time",
+                metric_value=(
+                    time.perf_counter() - total_start
+                ) * 1000,
+                unit="ms",
+            )
+            
             retrieval_analytics_service.log(
             db=db,
             user_id=user_id,
