@@ -13,6 +13,14 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+
+from ..services.memory_analytics_service import (
+    memory_analytics_service,
+)
+
+from ..schemas.memory_analytics import (
+    MemoryAnalyticsResponse,
+)
 from ..services.evaluation_service import EvaluationService
 from ..models.ai_request_log import AIRequestLog
 from app.schemas.insights import MemoryInsights
@@ -799,5 +807,16 @@ def get_evaluation_summary(
         user_id=current_user.id,
     )
 
-
+@router.get(
+    "/analytics/memory",
+    response_model=MemoryAnalyticsResponse,
+)
+def get_memory_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return memory_analytics_service.get_statistics(
+        db=db,
+        user_id=current_user.id,
+    )
 
