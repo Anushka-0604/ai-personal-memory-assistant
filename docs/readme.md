@@ -2,9 +2,11 @@
 
 Welcome to the technical documentation for the **AI Personal Memory & Decision Assistant**.
 
-This directory contains the complete software engineering and AI documentation for the project, including system architecture, AI architecture, APIs, database design, semantic search, Retrieval-Augmented Generation (RAG), conversational memory, development phases, and the future roadmap.
+This directory contains the complete software engineering, database, artificial intelligence, machine learning, and system architecture documentation for the project.
 
-The documentation is continuously updated after the completion of every development phase.
+The documentation covers system architecture, AI architecture, APIs, database design, semantic search, hybrid retrieval, Retrieval-Augmented Generation (RAG), conversational memory, long-term memory management, analytics, observability, and future development phases.
+
+The documentation is updated after the completion of every development phase.
 
 ---
 
@@ -18,6 +20,7 @@ The documentation is continuously updated after the completion of every developm
 - Phase 4 – AI Memory Engine & Semantic Search
 - Phase 5 – Retrieval-Augmented Generation (RAG)
 - Phase 6 – Conversational Memory & Chat Management
+- Phase 7 – Advanced Memory Intelligence
 
 ---
 
@@ -36,6 +39,7 @@ The documentation is continuously updated after the completion of every developm
 - Phase 4 APIs
 - Phase 5 APIs
 - Phase 6 APIs
+- Phase 7 APIs
 
 ---
 
@@ -52,7 +56,9 @@ The documentation is continuously updated after the completion of every developm
 - Phase 4 AI Pipeline
 - Phase 5 RAG Pipeline
 - Semantic Search Architecture
-- Data Flow Diagrams
+- Phase 7 Diagrams
+
+---
 
 # Current Project Status
 
@@ -115,39 +121,18 @@ The documentation is continuously updated after the completion of every developm
 
 **Status:** Completed
 
-### Machine Learning
+### Features Implemented
 
 - Sentence Transformers Integration
 - all-MiniLM-L6-v2 Embedding Model
 - Automatic Embedding Generation
 - Automatic Embedding Updates
-
-### Vector Database
-
-- PostgreSQL 17
-- pgvector Extension
-- VECTOR(384) Embedding Storage
-- Alembic Vector Migration
-
-### AI Services
-
+- PostgreSQL + pgvector Integration
+- Semantic Search
+- Top-K Retrieval
 - Embedding Service
 - Semantic Search Service
-- Cosine Similarity Search
-- Top-K Memory Retrieval
-
-### APIs
-
-- Semantic Search Endpoint
-- Automatic Embedding Pipeline
-- AI-Enhanced Memory CRUD
-
-### Architecture
-
-- AI Layer
-- Vector Database Layer
-- Semantic Retrieval Pipeline
-- Retrieval Engine
+- AI Memory Pipeline
 
 ---
 
@@ -155,34 +140,17 @@ The documentation is continuously updated after the completion of every developm
 
 **Status:** Completed
 
-### Large Language Model
+### Features Implemented
 
 - Google Gemini Integration
+- Prompt Builder
 - LLM Service
-- Prompt Builder
-- AI Response Generation
-
-### Retrieval-Augmented Generation
-
-- Query Embedding Generation
-- Semantic Vector Search
-- Top-K Memory Retrieval
+- AI Chat Endpoint
+- Retrieval-Augmented Generation
+- Memory Grounding
 - Similarity Threshold Filtering
-- Context Construction
-- Prompt Builder
-- Memory-Grounded Responses
-
-### AI Chat
-
-- Protected Chat API
-- Chat Service
-- Personalized AI Responses
-
-### Reliability
-
-- Graceful LLM Error Handling
-- Logging
-- Production-Oriented Service Architecture
+- Personalized Responses
+- Production-Oriented Chat Architecture
 
 ---
 
@@ -190,50 +158,100 @@ The documentation is continuously updated after the completion of every developm
 
 **Status:** Completed
 
-### Conversation Management
+### Features Implemented
 
 - Persistent Chat Sessions
+- Conversation History
 - Chat Session Management
-- Conversation History Storage
+- Chat Message Management
+- Conversation-Aware Retrieval
+- Short-Term Memory
 - Multi-turn Conversations
-- Short-Term Conversational Memory
+- Updated Prompt Builder
+- Context-Aware RAG
 
-### Database
+---
 
-- Chat Sessions Table
-- Chat Messages Table
-- User–Chat Relationships
-- Persistent Conversation Storage
+## ✅ Phase 7 – Advanced Memory Intelligence
 
-### AI Enhancements
+**Status:** Completed
 
-- Conversation-Aware RAG
-- Combined Long-Term and Short-Term Memory
-- Context-Aware Prompt Construction
-- Conversation History Retrieval
-- Enhanced Prompt Builder
+### Module 1 – Automatic Memory Extraction
 
-### Services
+- Entity Extraction
+- Gemini Extraction
+- Temporal Extraction
+- Knowledge Graph Generation
+- Neo4j Integration
 
-- Chat Session Service
-- Chat Message Service
-- Updated Chat Service
-- Improved Prompt Builder
-- Gemini Integration
+### Module 2 – Memory Classification
 
-### APIs
+- Automatic Memory Categories
+- Classification Service
 
-- Chat Session CRUD APIs
-- Conversation History APIs
-- Updated AI Chat Endpoint
+### Module 3 – Importance Ranking
 
-### Documentation
+- Importance Scoring
+- Recency Scoring
+- Weighted Ranking
 
-- Phase 6 Documentation
-- Phase 6 API Reference
-- Updated AI Architecture
-- Updated Database Documentation
-- Updated System Architecture
+### Module 4 – Memory Metadata
+
+- Automatic Tags
+- Sentiment Analysis
+- Confidence Scores
+- Metadata Storage
+
+### Module 5 – Intelligent Context Selection
+
+- Multi-factor Ranking
+- Category-aware Selection
+- Context Selection Service
+
+### Module 6 – Conversation Intelligence
+
+- Context Resolution
+- Conversation Memory
+- Reference Resolution
+
+### Module 7 – Long-Term Memory Management
+
+- Duplicate Detection
+- Evidence Tracking
+- Memory Reinforcement
+- Memory Decay
+- Archive Strategy
+- Forgetting Strategy
+- Memory Cleanup Service
+
+### Module 8 – Advanced Memory Retrieval
+
+- Query Rewrite
+- Hybrid Retrieval
+- PostgreSQL Full-Text Search
+- Metadata Filtering
+- Cross Encoder Re-ranking
+- Diversification
+
+### Module 9 – Personalized Memory Retrieval
+
+- Personalization Service
+- Context-aware Retrieval
+- User Interaction Scoring
+- Personalized Ranking
+
+### Module 10 – AI Observability & Evaluation
+
+- AI Request Logging
+- Retrieval Analytics
+- Usage Dashboard
+- AI Dashboard
+- Evaluation Service
+- Observability Service
+- System Metrics
+- Performance Monitoring
+
+---
 
 # Current Technology Stack
 
@@ -250,6 +268,7 @@ The documentation is continuously updated after the completion of every developm
 
 - PostgreSQL 17
 - pgvector
+- Neo4j
 
 ---
 
@@ -257,6 +276,8 @@ The documentation is continuously updated after the completion of every developm
 
 - Sentence Transformers
 - all-MiniLM-L6-v2
+- Cross Encoder (MS MARCO MiniLM)
+- spaCy
 - PyTorch
 - Transformers
 - NumPy
@@ -267,9 +288,12 @@ The documentation is continuously updated after the completion of every developm
 
 - Google Gemini
 - Retrieval-Augmented Generation (RAG)
-- Conversational RAG
+- Hybrid Retrieval
+- Personalized Retrieval
+- Knowledge Graph
+- AI Observability
+- Analytics
 - Prompt Engineering
-- Semantic Search
 
 ---
 
@@ -291,7 +315,7 @@ The documentation is continuously updated after the completion of every developm
 | Phase 4 – AI Memory Engine & Semantic Search | ✅ Completed |
 | Phase 5 – Retrieval-Augmented Generation (RAG) | ✅ Completed |
 | Phase 6 – Conversational Memory & Chat Management | ✅ Completed |
-| Phase 7 – Intelligent Memory Management | 🚀 Next |
+| Phase 7 – Advanced Memory Intelligence | ✅ Completed |
 | Phase 8 – Document Intelligence | ⏳ Planned |
 | Phase 9 – Multimodal AI | ⏳ Planned |
 | Phase 10 – Decision Intelligence Engine | ⏳ Planned |
@@ -300,22 +324,23 @@ The documentation is continuously updated after the completion of every developm
 
 # Upcoming Phase
 
-## 🚀 Phase 7 – Intelligent Memory Management
+## ⏳ Phase 8 – Document Intelligence
 
 ### Planned Features
 
-- Automatic Memory Extraction
-- Intelligent Memory Ranking
-- Context Window Management
-- Memory Summarization
-- Token Optimization
-- Intelligent Context Selection
+- Document Upload
+- OCR
+- Document Parsing
+- Chunking
+- Document Embeddings
+- Hybrid Document Retrieval
+- Document-Augmented Generation (DocRAG)
 
 ---
 
 # Documentation Philosophy
 
-The documentation follows a modular structure where each development phase is documented independently while maintaining centralized architecture, database, AI, and API references.
+The documentation follows a modular structure where each development phase is documented independently while maintaining centralized architecture, AI, database, API, and system references.
 
 This approach provides:
 
@@ -330,6 +355,6 @@ This approach provides:
 
 # Last Updated
 
-**Phase 6 – Conversational Memory & Chat Management (Completed)**
+**Phase 7 – Advanced Memory Intelligence (Completed)**
 
-**Documentation Version:** **v0.6.0**
+**Documentation Version:** **v0.7.0**

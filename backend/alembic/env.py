@@ -9,6 +9,12 @@ import os
 
 from alembic import context
 
+from app.models.chat_session import ChatSession
+from app.models.chat_message import ChatMessage
+from app.models.ai_request_log import AIRequestLog
+from app.models.system_metric import SystemMetric
+from app.models.user_interaction import UserInteraction
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 BASE_DIR = Path(__file__).resolve().parent.parent

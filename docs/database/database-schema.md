@@ -1,13 +1,16 @@
 # Database Schema
 
-The AI Personal Memory & Decision Assistant uses **PostgreSQL** as its primary relational database. Vector embeddings are stored using the **pgvector** extension, allowing semantic search directly within PostgreSQL.
+The AI Personal Memory & Decision Assistant uses **PostgreSQL** as its primary relational database. Vector embeddings are stored using the **pgvector** extension, allowing semantic search directly within PostgreSQL. Neo4j is used alongside PostgreSQL to store the knowledge graph generated from extracted memory entities.
 
-After Phase 6, the database contains four main tables:
+After **Phase 7**, the database contains seven primary tables:
 
 - users
 - memories
 - chat_sessions
 - chat_messages
+- user_interactions
+- ai_request_logs
+- system_metrics
 
 ---
 
@@ -31,6 +34,18 @@ After Phase 6, the database contains four main tables:
 | content | Text | Memory Content |
 | source | String | Source of Memory |
 | embedding | Vector(384) | Semantic Embedding (pgvector) |
+| category | String | Automatically classified memory category |
+| importance | Float | Memory importance score |
+| tags | JSON / Array | Automatically generated tags |
+| sentiment | String | Memory sentiment |
+| confidence | Float | Sentiment confidence score |
+| temporal_date | Date | Extracted temporal information |
+| extracted_data | JSON | Structured extracted entities |
+| access_count | Integer | Number of memory accesses |
+| last_accessed | Timestamp | Last retrieval timestamp |
+| evidence_count | Integer | Number of memory reinforcements |
+| is_archived | Boolean | Archive status |
+| is_forgotten | Boolean | Forgetting status |
 | created_at | Timestamp | Memory Creation Time |
 | updated_at | Timestamp | Last Updated Time |
 
@@ -61,6 +76,49 @@ The **chat_messages** table stores every message exchanged between the user and 
 | role | String | user / assistant |
 | content | Text | Message Content |
 | created_at | Timestamp | Message Creation Time |
+
+---
+
+# AI Request Logs Table
+
+The **ai_request_logs** table stores AI evaluation, retrieval, and performance metrics generated during every chat request.
+
+| Column | Type | Description |
+|----------|------|-------------|
+| id | Integer | Primary Key |
+| user_id | Integer | Foreign Key (users.id) |
+| chat_session_id | Integer | Foreign Key (chat_sessions.id) |
+| query | Text | User query |
+| retrieval_count | Integer | Number of retrieved memories |
+| selected_count | Integer | Number of selected memories |
+| average_similarity | Float | Average similarity score |
+| average_importance | Float | Average importance score |
+| average_context_score | Float | Average context score |
+| precision_score | Float | Retrieval precision |
+| recall_score | Float | Retrieval recall |
+| response_generated | Boolean | Whether a response was generated |
+| response_length | Integer | Generated response length |
+| embedding_time_ms | Float | Embedding generation time |
+| retrieval_time_ms | Float | Retrieval execution time |
+| ranking_time_ms | Float | Ranking execution time |
+| context_time_ms | Float | Context selection time |
+| prompt_time_ms | Float | Prompt construction time |
+| llm_time_ms | Float | LLM response time |
+| total_time_ms | Float | Total request time |
+| created_at | Timestamp | Log creation time |
+
+---
+
+# System Metrics Table
+
+The **system_metrics** table stores performance metrics used for monitoring and dashboard generation.
+
+| Column | Type | Description |
+|----------|------|-------------|
+| id | Integer | Primary Key |
+| metric_name | String | Metric identifier |
+| metric_value | Float | Recorded metric value |
+| created_at | Timestamp | Metric timestamp |
 
 ---
 
@@ -96,6 +154,22 @@ Each chat message belongs to exactly one chat session.
 
 ---
 
+### User → AI Request Log
+
+**Relationship:** One-to-Many
+
+Each user can generate multiple AI request logs during conversations.
+
+---
+
+### Chat Session → AI Request Log
+
+**Relationship:** One-to-Many
+
+Each chat session can generate multiple AI request logs used for evaluation and analytics.
+
+---
+
 # Current Database Structure
 
 ```
@@ -104,7 +178,10 @@ PostgreSQL
 ├── users
 ├── memories
 ├── chat_sessions
-└── chat_messages
+├── chat_messages
+├── user_interactions
+├── ai_request_logs
+└── system_metrics
 ```
 
 ---
@@ -112,19 +189,20 @@ PostgreSQL
 # Database Architecture
 
 ```
-                    User
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-        ▼                           ▼
-    Memories                 Chat Sessions
-        │                           │
-        │                           ▼
-        │                    Chat Messages
+                      Users
+                        │
+        ┌───────────────┼──────────────────┐
+        ▼               ▼                  ▼
+    Memories      Chat Sessions     AI Request Logs
+        │               │                  │
+        │               ▼                  ▼
+        │        Chat Messages      System Metrics
         │
         ▼
-Vector Embeddings
-(pgvector)
+Vector Embeddings (pgvector)
+        │
+        ▼
+ Knowledge Graph (Neo4j)
 ```
 
 ---
@@ -134,14 +212,17 @@ Vector Embeddings
 Whenever the user interacts with the AI assistant, the following process occurs:
 
 1. The user sends a message.
-2. A new chat message is stored.
-3. Previous conversation history is retrieved.
-4. Relevant memories are retrieved using semantic search.
-5. A prompt is constructed.
-6. The LLM generates a response.
-7. The assistant's response is stored as another chat message.
+2. Conversation history is retrieved.
+3. The query is rewritten using conversation context.
+4. Hybrid retrieval is performed using semantic search, keyword search, and metadata filtering.
+5. Retrieved memories are reranked using a Cross Encoder.
+6. Personalized ranking and intelligent context selection are applied.
+7. A prompt is constructed.
+8. The Gemini LLM generates a response.
+9. User and assistant messages are stored.
+10. AI evaluation metrics and execution timings are logged.
 
-This design ensures that every conversation is permanently stored while also enabling context-aware interactions.
+This workflow enables accurate, context-aware, and personalized Retrieval-Augmented Generation while continuously monitoring AI performance.
 
 ---
 
@@ -151,11 +232,17 @@ The current database design provides:
 
 - Secure user management.
 - Persistent personal memories.
+- Automatic metadata enrichment.
+- Knowledge graph integration.
 - Semantic search using pgvector.
+- Hybrid retrieval support.
+- Personalized memory retrieval.
+- Long-term memory lifecycle management.
+- AI request logging.
+- Retrieval analytics.
+- System performance monitoring.
 - Multi-session conversations.
-- Complete conversation history.
-- Context-aware AI interactions.
-- Scalable relational database architecture.
+- Production-grade relational database architecture.
 
 ---
 
@@ -165,18 +252,17 @@ Future phases may introduce additional tables such as:
 
 - uploaded_documents
 - document_chunks
-- document_embeddings *(if a separate document storage strategy is adopted)*
 - uploaded_images
 - voice_memories
 - decision_history
-- knowledge_graph_nodes
-- knowledge_graph_edges
+- planner_tasks
 
 These additions will support:
 
 - Document Intelligence
 - Document Semantic Search
-- Retrieval-Augmented Generation (RAG)
-- AI Personal Assistant
-- Knowledge Graph
-- Long-Term Memory Management
+- Multimodal AI
+- Voice Intelligence
+- Image Understanding
+- Decision Support
+- Autonomous Planning

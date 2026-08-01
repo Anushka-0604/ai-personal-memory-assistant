@@ -2,7 +2,7 @@
 
 A production-level AI-powered **Personal Memory & Decision Assistant** that acts as a secure digital **"Second Brain"** for users.
 
-The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Semantic Search**, **Retrieval-Augmented Generation (RAG)**, and **Conversational AI** powered by **Google Gemini**.
+The system enables users to securely store, organize, retrieve, and interact with their personal memories using **Machine Learning**, **Vector Databases**, **Knowledge Graphs**, **Hybrid Retrieval**, **Semantic Search**, **Personalized Retrieval**, **Retrieval-Augmented Generation (RAG)**, and **Conversational AI** powered by **Google Gemini**.
 
 The project is being developed incrementally following production software engineering practices, with each phase introducing new architectural capabilities while maintaining modularity, scalability, security, and clean software design.
 
@@ -209,6 +209,95 @@ The project is being developed incrementally following production software engin
 - Conversation History APIs
 - Updated AI Chat Endpoint
 
+---
+
+## ✅ Phase 7 – Advanced Memory Intelligence
+
+**Status:** Completed
+
+### Module 1 – Automatic Memory Extraction
+
+- Entity Extraction using spaCy
+- Gemini-based Information Extraction
+- Temporal Information Extraction
+- Automatic Structured Metadata Extraction
+- Knowledge Graph Generation
+- Neo4j Integration
+
+### Module 2 – Memory Classification
+
+- Automatic Memory Classification
+- Category Detection
+- Classification Service
+
+### Module 3 – Importance Ranking
+
+- Importance Scoring
+- Recency Scoring
+- Weighted Memory Ranking
+
+### Module 4 – Memory Metadata
+
+- Automatic Tag Generation
+- Sentiment Analysis
+- Confidence Scores
+- Metadata Enrichment
+- Temporal Metadata Storage
+
+### Module 5 – Intelligent Context Selection
+
+- Multi-factor Ranking
+- Category-aware Ranking
+- Intelligent Context Selection
+- Context Selector Service
+
+### Module 6 – Conversation Intelligence
+
+- Reference Resolution
+- Conversation Context Management
+- Context-aware Retrieval
+- Conversation Memory Integration
+
+### Module 7 – Long-Term Memory Management
+
+- Duplicate Detection
+- Evidence Tracking
+- Memory Reinforcement
+- Memory Decay
+- Automatic Archive Strategy
+- Forgetting Strategy
+- Memory Cleanup Service
+
+### Module 8 – Advanced Memory Retrieval
+
+- Query Rewrite
+- Hybrid Retrieval
+- PostgreSQL Full-Text Search
+- Metadata Filtering
+- Cross Encoder Re-ranking
+- Retrieval Diversification
+
+### Module 9 – Personalized Memory Retrieval
+
+- Personalization Service
+- User Interaction Scoring
+- Personalized Ranking
+- Context-aware Retrieval
+- Adaptive Retrieval Pipeline
+
+### Module 10 – AI Observability & Evaluation
+
+- AI Request Logging
+- Retrieval Analytics
+- Usage Dashboard
+- AI Dashboard
+- Evaluation Service
+- Observability Service
+- System Metrics
+- Performance Monitoring
+
+---
+
 # 🛠 Technology Stack
 
 ## Frontend *(Planned)*
@@ -233,23 +322,30 @@ The project is being developed incrementally following production software engin
 
 - PostgreSQL 17
 - pgvector
+- Neo4j
 
 ---
 
 ## Artificial Intelligence
 
-- Sentence Transformers
-- all-MiniLM-L6-v2
 - Google Gemini API
 - Retrieval-Augmented Generation (RAG)
-- Conversational RAG
+- Hybrid Retrieval
+- Personalized Retrieval
+- Knowledge Graph
 - Prompt Engineering
 - Semantic Search
+- AI Observability
+- Retrieval Analytics
 
 ---
 
 ## Machine Learning
 
+- Sentence Transformers
+- all-MiniLM-L6-v2
+- Cross Encoder (MS MARCO MiniLM)
+- spaCy
 - PyTorch
 - Transformers
 - NumPy
@@ -276,8 +372,6 @@ The project is being developed incrementally following production software engin
 - Redis
 - Celery
 
----
-
 # 📂 Project Structure
 
 ```text
@@ -285,27 +379,62 @@ AI-Personal-Memory-Assistant/
 
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── database/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   │   ├── embedding_service.py
-│   │   │   ├── llm_service.py
-│   │   │   ├── memory_service.py
-│   │   │   ├── prompt_builder.py
-│   │   │   ├── chat_service.py
-│   │   │   ├── chat_session_service.py
-│   │   │   └── chat_message_service.py
-│   │   │
-│   │   ├── utils/
-│   │   └── main.py
 │   │
-│   ├── alembic/
-│   ├── tests/
-│   ├── .env.example
-│   └── requirements.txt
+│   ├── api/
+│   │
+│   ├── core/
+│   │
+│   ├── database/
+│   │
+│   ├── models/
+│   │
+│   ├── schemas/
+│   │
+│   ├── services/
+│   │   │
+│   │   ├── authentication_service.py
+│   │   ├── memory_service.py
+│   │   ├── embedding_service.py
+│   │   ├── llm_service.py
+│   │   ├── prompt_builder.py
+│   │   ├── chat_service.py
+│   │   ├── chat_session_service.py
+│   │   ├── chat_message_service.py
+│   │   │
+│   │   ├── extraction_service.py
+│   │   ├── entity_extractor.py
+│   │   ├── gemini_extractor.py
+│   │   ├── temporal_service.py
+│   │   ├── classification_service.py
+│   │   ├── ranking_service.py
+│   │   ├── tag_service.py
+│   │   ├── sentiment_service.py
+│   │   ├── graph_builder.py
+│   │   ├── neo4j_service.py
+│   │   ├── context_selector.py
+│   │   ├── query_rewrite_service.py
+│   │   ├── cross_encoder_service.py
+│   │   ├── diversification_service.py
+│   │   ├── personalization_service.py
+│   │   ├── context_retrieval_service.py
+│   │   ├── archive_service.py
+│   │   ├── forgetting_service.py
+│   │   ├── memory_cleanup_service.py
+│   │   ├── evaluation_service.py
+│   │   ├── observability_service.py
+│   │   ├── retrieval_analytics_service.py
+│   │   ├── retrieval_quality_service.py
+│   │   ├── usage_dashboard_service.py
+│   │   ├── ai_dashboard_service.py
+│   │   ├── cache_service.py
+│   │   └── system_metric_service.py
+│   │
+│   ├── utils/
+│   └── main.py
+│
+├── alembic/
+│
+├── tests/
 │
 ├── frontend/
 │
@@ -319,6 +448,9 @@ AI-Personal-Memory-Assistant/
 │
 └── README.md
 ```
+
+---
+
 # 🔗 Current API Endpoints
 
 ## Authentication
@@ -340,7 +472,7 @@ AI-Personal-Memory-Assistant/
 | GET | `/memories/{id}` | Retrieve Memory by ID |
 | PUT | `/memories/{id}` | Update Memory |
 | DELETE | `/memories/{id}` | Delete Memory |
-| POST | `/memories/search` | Semantic Memory Search |
+| POST | `/memories/search` | Hybrid Memory Search |
 
 ---
 
@@ -348,13 +480,23 @@ AI-Personal-Memory-Assistant/
 
 | Method | Endpoint | Description |
 |---------|----------|-------------|
-| POST | `/chat` | Generate an AI response using Conversational RAG |
-| POST | `/chat/sessions` | Create a new chat session |
-| GET | `/chat/sessions` | Retrieve all chat sessions |
-| GET | `/chat/sessions/{session_id}` | Retrieve a specific chat session |
-| PUT | `/chat/sessions/{session_id}` | Rename a chat session |
-| DELETE | `/chat/sessions/{session_id}` | Delete a chat session |
+| POST | `/chat` | Generate AI response |
+| POST | `/chat/sessions` | Create chat session |
+| GET | `/chat/sessions` | Retrieve chat sessions |
+| GET | `/chat/sessions/{session_id}` | Retrieve chat session |
+| PUT | `/chat/sessions/{session_id}` | Rename chat session |
+| DELETE | `/chat/sessions/{session_id}` | Delete chat session |
 | GET | `/chat/sessions/{session_id}/messages` | Retrieve conversation history |
+
+---
+
+## Analytics APIs
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/analytics/retrieval-quality` | Retrieval quality metrics |
+| GET | `/analytics/usage-dashboard` | AI usage statistics |
+| GET | `/analytics/ai-dashboard` | Unified AI dashboard |
 
 ---
 
@@ -373,12 +515,14 @@ AI-Personal-Memory-Assistant/
 ## Database
 
 - PostgreSQL 17
+- pgvector Integration
+- Neo4j Knowledge Graph
 - SQLAlchemy ORM
 - Alembic Migrations
-- Relational Data Modeling
-- pgvector Integration
 - Persistent Chat Sessions
 - Persistent Conversation History
+- AI Request Logs
+- System Metrics
 
 ---
 
@@ -386,59 +530,103 @@ AI-Personal-Memory-Assistant/
 
 - Memory CRUD Operations
 - User-specific Memory Storage
-- Automatic Embedding Generation
-- Automatic Embedding Updates
-- Semantic Memory Retrieval
+- Automatic Entity Extraction
+- Automatic Memory Classification
+- Automatic Metadata Generation
+- Sentiment Analysis
+- Automatic Tag Generation
+- Importance Ranking
+- Duplicate Detection
+- Evidence Tracking
+- Long-Term Memory Management
+- Archive Strategy
+- Forgetting Strategy
 
 ---
 
-## Conversational AI
+## AI & Retrieval
 
 - Sentence Embeddings
 - Semantic Search
-- Cosine Similarity Search
-- Vector Database
+- PostgreSQL Full-Text Search
+- Hybrid Retrieval
+- Query Rewriting
+- Cross Encoder Re-ranking
+- Personalized Retrieval
+- Context-aware Retrieval
+- Metadata Filtering
+- Intelligent Context Selection
+- Knowledge Graph Generation
 - Retrieval-Augmented Generation (RAG)
-- Conversational RAG
-- Prompt Builder
+- Conversation-aware RAG
 - Google Gemini Integration
-- Persistent Chat Sessions
-- Conversation History
-- Multi-turn Conversations
-- Context-Aware Responses
-- Memory-Grounded Responses
+- Memory-grounded Responses
+- Context-aware Responses
+
+---
+
+## Monitoring & Analytics
+
+- AI Request Logging
+- Retrieval Analytics
+- Retrieval Quality Evaluation
+- Usage Dashboard
+- AI Dashboard
+- System Metrics
+- Performance Monitoring
+- Observability
+- Embedding Cache
 
 ---
 
 # 🏗 Current System Architecture
 
 ```text
-                     User
-                       │
-                       ▼
-                 FastAPI Backend
-                       │
-      ┌────────────────┼────────────────┐
-      ▼                ▼                ▼
-Authentication    Chat Service    Memory Service
-                       │
-      ┌────────────────┼────────────────┐
-      ▼                ▼                ▼
-Conversation     Embedding        Prompt Builder
- History           Service
-      │                │                │
-      └────────────────┼────────────────┘
-                       ▼
-              Semantic Search (pgvector)
-                       │
-                       ▼
-                 Google Gemini
-                       │
-                       ▼
-             Store Chat Messages
-                       │
-                       ▼
-                 AI Generated Response
+                          User
+                            │
+                            ▼
+                     FastAPI Backend
+                            │
+      ┌─────────────────────┼──────────────────────────────┐
+      ▼                     ▼                              ▼
+Authentication        Memory Service                 Chat Service
+      │                     │                              │
+      ▼                     ▼                              ▼
+JWT Verification  Memory Intelligence          Conversation Management
+                          │                              │
+                          ▼                              ▼
+                Embedding Service            Context Retrieval
+                          │                              │
+                          ▼                              ▼
+               Query Rewrite Service        Chat Session Service
+                          │                              │
+                          ▼                              ▼
+              Hybrid Retrieval Engine      Chat Message Service
+                          │
+                          ▼
+              Cross Encoder Re-ranking
+                          │
+                          ▼
+             Personalization Service
+                          │
+                          ▼
+             Intelligent Context Selector
+                          │
+                          ▼
+                   Prompt Builder
+                          │
+                          ▼
+                    Google Gemini
+                          │
+                          ▼
+      Evaluation & Observability Services
+                          │
+                          ▼
+                    SQLAlchemy ORM
+                          │
+        ┌─────────────────┼──────────────────┐
+        ▼                 ▼                  ▼
+ PostgreSQL + pgvector   Neo4j       Analytics Tables
 ```
 
 # 📈 Development Roadmap
@@ -451,27 +639,32 @@ Conversation     Embedding        Prompt Builder
 | Phase 4 – AI Memory Engine & Semantic Search | ✅ Completed |
 | Phase 5 – Retrieval-Augmented Generation (RAG) | ✅ Completed |
 | Phase 6 – Conversational Memory & Chat Management | ✅ Completed |
-| Phase 7 – Intelligent Memory Management | 🚀 Next |
+| Phase 7 – Advanced Memory Intelligence | ✅ Completed |
 | Phase 8 – Document Intelligence | ⏳ Planned |
 | Phase 9 – Multimodal AI | ⏳ Planned |
 | Phase 10 – Decision Intelligence Engine | ⏳ Planned |
 
 ---
 
-# 🎯 Upcoming Features (Phase 7)
+# 🎯 Upcoming Features (Phase 8)
 
-The next phase focuses on making the assistant smarter by automatically understanding, organizing, and managing user memories.
+The next phase focuses on enabling the assistant to understand, process, and retrieve information from uploaded documents.
 
 ### Planned Features
 
-- Automatic Memory Extraction
-- Intelligent Memory Ranking
-- Context Window Management
-- Memory Summarization
-- Token Optimization
-- Intelligent Context Selection
-- Improved Retrieval Accuracy
-- Enhanced Personalization
+- Document Upload
+- OCR Integration
+- PDF Processing
+- DOCX Processing
+- Intelligent Text Extraction
+- Automatic Chunking
+- Document Embeddings
+- Hybrid Document Retrieval
+- Document-Augmented Generation (DocRAG)
+- Document Metadata Extraction
+- Document Classification
+- Document Search
+- Multi-document Retrieval
 
 ---
 
@@ -486,10 +679,15 @@ Documentation includes:
 - AI Architecture
 - API Documentation
 - Database Documentation
+- Alembic Migration History
 - Vector Database Design
+- Hybrid Retrieval Architecture
+- Knowledge Graph Architecture
 - Semantic Search
 - Retrieval-Augmented Generation (RAG)
 - Conversational RAG
+- AI Observability
+- AI Analytics
 - System Diagrams
 
 ---
@@ -506,36 +704,91 @@ It demonstrates practical implementation of:
 - Artificial Intelligence
 - Machine Learning
 - Vector Databases
+- Knowledge Graphs
 - Semantic Search
+- Hybrid Retrieval
+- Personalized Retrieval
 - Retrieval-Augmented Generation (RAG)
 - Conversational AI
 - Large Language Models (LLMs)
+- AI Observability
 - Production Architecture
 - Cloud-ready Development
 
-The long-term vision is to build an intelligent assistant capable of:
+With the completion of **Phase 7**, the assistant is capable of:
 
-- Understanding user memories
-- Maintaining long-term semantic memory
-- Preserving short-term conversational context
-- Retrieving relevant information intelligently
-- Assisting with decisions
-- Learning user preferences
-- Providing personalized, context-aware interactions
+- Understanding user memories automatically
+- Extracting entities and structured metadata
+- Building a Knowledge Graph
+- Managing long-term memory intelligently
+- Detecting duplicate memories
+- Reinforcing important memories
+- Archiving and forgetting inactive memories
+- Performing hybrid semantic and keyword retrieval
+- Re-ranking memories using AI
+- Personalizing retrieval using user interactions
+- Maintaining multi-turn conversational context
+- Monitoring AI performance through analytics and observability
+- Generating personalized, memory-grounded AI responses
 
-Future phases will extend the assistant with document intelligence, multimodal AI, automatic memory extraction, knowledge graphs, and intelligent decision-making capabilities.
+Future phases will extend the assistant with document intelligence, multimodal AI, autonomous reasoning, intelligent planning, and decision-support capabilities.
+
+---
+
+# 🌟 Key Highlights
+
+The project currently includes:
+
+- ✅ Production-ready FastAPI backend
+- ✅ JWT Authentication
+- ✅ PostgreSQL + pgvector
+- ✅ Neo4j Knowledge Graph
+- ✅ Semantic Search
+- ✅ Hybrid Retrieval
+- ✅ Cross-Encoder Re-ranking
+- ✅ Personalized Retrieval
+- ✅ Automatic Memory Extraction
+- ✅ Knowledge Graph Construction
+- ✅ Long-Term Memory Management
+- ✅ Conversational Retrieval-Augmented Generation (RAG)
+- ✅ Google Gemini Integration
+- ✅ AI Analytics & Observability
+- ✅ Modular Service-Oriented Architecture
 
 ---
 
 # 📄 License
 
-This project is being developed for educational purposes, portfolio development, and practical learning in:
+This project is being developed for educational purposes, portfolio development, research, and practical learning in:
 
 - Software Engineering
 - Artificial Intelligence
 - Machine Learning
-- Full Stack Development
-- Distributed Systems
-- Large Language Models
-- Retrieval-Augmented Generation
+- Backend Development
+- System Design
+- Knowledge Graphs
+- Vector Databases
+- Retrieval-Augmented Generation (RAG)
+- Large Language Models (LLMs)
 - Conversational AI
+- Production AI Systems
+- Cloud-native Application Development
+
+---
+
+# 🙌 Acknowledgements
+
+This project builds upon several open-source technologies and frameworks, including:
+
+- FastAPI
+- PostgreSQL
+- pgvector
+- SQLAlchemy
+- Alembic
+- Sentence Transformers
+- PyTorch
+- spaCy
+- Neo4j
+- Google Gemini API
+
+These technologies provide the foundation for building a scalable, production-grade AI Personal Memory & Decision Assistant.

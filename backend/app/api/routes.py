@@ -14,6 +14,12 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..services.ai_dashboard_service import (
+    ai_dashboard_service,
+)
+from ..schemas.ai_dashboard import (
+    AIDashboardResponse,
+)
 from ..services.usage_dashboard_service import (
     usage_dashboard_service,
 )
@@ -891,6 +897,19 @@ def get_usage_dashboard(
     current_user: User = Depends(get_current_user),
 ):
     return usage_dashboard_service.get_dashboard(
+        db=db,
+        user_id=current_user.id,
+    )
+
+@router.get(
+    "/analytics/ai-dashboard",
+    response_model=AIDashboardResponse,
+)
+def get_ai_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ai_dashboard_service.get_dashboard(
         db=db,
         user_id=current_user.id,
     )

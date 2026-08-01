@@ -6,40 +6,60 @@ The AI Personal Memory & Decision Assistant is a production-level AI application
 
 The system follows a layered architecture to ensure scalability, maintainability, modularity, and clean separation of concerns.
 
-With the completion of **Phase 6**, the system supports Retrieval-Augmented Generation (RAG) with persistent conversation history, enabling context-aware, multi-turn AI conversations grounded in the user's stored memories.
+With the completion of **Phase 7**, the system has evolved into a production-grade intelligent memory platform supporting automatic memory understanding, hybrid retrieval, long-term memory management, knowledge graph construction, personalized retrieval, Retrieval-Augmented Generation (RAG), AI observability, and analytics.
 
 ---
 
-# Current Architecture (Phase 6)
+# Current Architecture (Phase 7)
 
-                          User
+```
+                           User
+                             │
+                             ▼
+                      FastAPI Backend
+                             │
+        ┌────────────────────┼──────────────────────────────┐
+        ▼                    ▼                              ▼
+ Authentication       Memory Service                 Chat Service
+        │                    │                              │
+        ▼                    ▼                              ▼
+ JWT Verification   Memory Intelligence         Conversation Management
+                            │                              │
+                            ▼                              ▼
+                  Embedding Service              Context Retrieval
+                            │                              │
+                            ▼                              ▼
+                 Query Rewrite Service         Chat Session Service
+                            │                              │
+                            ▼                              ▼
+                Hybrid Retrieval Engine       Chat Message Service
                             │
                             ▼
-                     FastAPI Backend
+                Cross Encoder Re-ranking
                             │
-      ┌─────────────────────┼────────────────────────────┐
-      ▼                     ▼                            ▼
-Authentication        Memory Service              Chat Service
-      │                     │                            │
-      ▼                     ▼                            ▼
-JWT Verification      CRUD Operations          Conversation Management
-      │                     │                            │
-      │                     ▼                            ▼
-      │             Embedding Service          Chat Session Service
-      │                                              │
-      │                                              ▼
-      │                                      Chat Message Service
-      │                                              │
-      └──────────────┬───────────────────────────────┘
-                     ▼
-              SQLAlchemy ORM
-                     │
-         ┌───────────┴───────────┐
-         ▼                       ▼
- PostgreSQL + pgvector     Prompt Builder
-         │                       │
-         ▼                       ▼
- Semantic Search          Gemini LLM
+                            ▼
+               Personalization Service
+                            │
+                            ▼
+               Context Selector Service
+                            │
+                            ▼
+                    Prompt Builder
+                            │
+                            ▼
+                     Google Gemini
+                            │
+                            ▼
+       Evaluation & Observability Services
+                            │
+                            ▼
+                     SQLAlchemy ORM
+                            │
+      ┌─────────────────────┼──────────────────────┐
+      ▼                     ▼                      ▼
+ PostgreSQL + pgvector    Neo4j             Analytics Tables
+```
+
 ---
 
 # Backend Layered Architecture
@@ -53,15 +73,23 @@ API Routes
 
 ↓
 
+Authentication
+
+↓
+
 Business Services
 
 ↓
 
-Database Layer
+AI Services
 
 ↓
 
-PostgreSQL + pgvector
+Persistence Layer
+
+↓
+
+PostgreSQL + pgvector + Neo4j
 ```
 
 ---
@@ -101,11 +129,32 @@ Current Services
 - Authentication Service
 - Memory Service
 - Embedding Service
+- Query Rewrite Service
+- Context Retrieval Service
+- Cross Encoder Service
+- Personalization Service
+- Diversification Service
+- Context Selector
 - Prompt Builder
 - LLM Service
 - Chat Service
 - Chat Session Service
 - Chat Message Service
+- Extraction Service
+- Classification Service
+- Ranking Service
+- Tag Service
+- Sentiment Service
+- Temporal Service
+- Graph Builder
+- Neo4j Service
+- Archive Service
+- Forgetting Service
+- Memory Cleanup Service
+- Evaluation Service
+- Observability Service
+- Retrieval Analytics Service
+- Usage Dashboard Service
 
 ---
 
@@ -114,16 +163,20 @@ Current Services
 Technology
 
 - PostgreSQL
+- pgvector
 - SQLAlchemy ORM
 - Alembic
-- pgvector
+- Neo4j
 
 Responsible for:
 
 - User Data
 - Memory Storage
 - Vector Embeddings
-- Semantic Search
+- Hybrid Retrieval
+- Knowledge Graph
+- AI Analytics
+- System Metrics
 - Chat Sessions
 - Chat Messages
 - Conversation History
@@ -132,50 +185,34 @@ Responsible for:
 
 # Current Database Schema
 
+```
 users
 │
 ├──────────────► memories
+│                     │
+│                     ▼
+│             user_interactions
 │
-└──────────────► chat_sessions
-                    │
-                    ▼
-             chat_messages
+├──────────────► chat_sessions
+│                     │
+│                     ▼
+│              chat_messages
+│
+└──────────────► ai_request_logs
 
-Relationship
-
-One User
-
-↓
-
-Many Memories
-
-Each memory stores:
-
-- Content
-- Source
-- Embedding Vector
-
-Each chat session stores:
-
-- Session Title
-- User Relationship
-- Conversation Metadata
-
-Each chat message stores:
-
-- User or Assistant Role
-- Message Content
-- Timestamp
+system_metrics
+```
 
 ---
 
-# Request Flow (Memory CRUD)
+# Request Flow (Memory Creation)
 
+```
 Client
 
 ↓
 
-POST /chat
+POST /memories
 
 ↓
 
@@ -183,35 +220,45 @@ Authentication
 
 ↓
 
-Chat Service
+Memory Service
 
 ↓
 
-Retrieve Conversation History
+Entity Extraction
 
 ↓
 
-Embedding Service
+Classification
 
 ↓
 
-Semantic Search (pgvector)
+Importance Ranking
 
 ↓
 
-Prompt Builder
+Tag Generation
 
 ↓
 
-Gemini LLM
+Sentiment Analysis
 
 ↓
 
-Store Chat Messages
+Embedding Generation
 
 ↓
 
-AI Response
+Duplicate Detection
+
+↓
+
+Knowledge Graph Update
+
+↓
+
+Store Memory
+```
+
 ---
 
 # Request Flow (AI Chat)
@@ -229,15 +276,35 @@ Authentication
 
 ↓
 
-Chat Service
+Conversation Context
 
 ↓
 
-Embedding Service
+Query Rewrite
 
 ↓
 
-Semantic Search (pgvector)
+Semantic Search
+
++
+
+Keyword Search
+
+↓
+
+Hybrid Retrieval
+
+↓
+
+Cross Encoder
+
+↓
+
+Personalization
+
+↓
+
+Context Selection
 
 ↓
 
@@ -246,6 +313,14 @@ Prompt Builder
 ↓
 
 Gemini LLM
+
+↓
+
+Evaluation Logging
+
+↓
+
+Store Chat Messages
 
 ↓
 
@@ -263,53 +338,59 @@ Implemented
 - User Registration
 - User Login
 - Memory CRUD APIs
-- Automatic Embedding Generation
-- pgvector Integration
+- Automatic Memory Extraction
+- Memory Classification
+- Importance Ranking
+- Metadata Generation
+- Sentiment Analysis
+- Knowledge Graph Generation
+- Duplicate Detection
+- Long-Term Memory Management
 - Semantic Search
+- Hybrid Retrieval
+- PostgreSQL Full Text Search
+- Cross Encoder Re-ranking
+- Personalized Retrieval
+- Context-aware Retrieval
 - Retrieval-Augmented Generation (RAG)
-- Prompt Engineering
-- Gemini LLM Integration
 - AI Chat Endpoint
+- AI Evaluation
+- AI Observability
+- Analytics Dashboards
 - SQLAlchemy ORM
 - Alembic Migrations
 - Swagger Documentation
 - Logging
-- Graceful Error Handling
 - Persistent Chat Sessions
 - Conversation History
 - Multi-turn Conversations
-- Chat Session Management
-- Chat Message Storage
 
 ---
 
 # System Architecture Overview
 
-                 React Frontend (Future)
-                         │
-                         ▼
-                  FastAPI Backend
-                         │
-      ┌──────────────────┼────────────────────┐
-      ▼                  ▼                    ▼
-Authentication     Memory Service      Chat Service
-      │                  │                    │
-      ▼                  ▼                    ▼
- PostgreSQL       Embedding Service   Conversation History
-      │                  │                    │
-      └──────────────► pgvector ◄─────────────┘
-                            │
-                            ▼
-                   Semantic Search
-                            │
-                            ▼
-                     Prompt Builder
-                            │
-                            ▼
-                      Gemini LLM
-                            │
-                            ▼
-                 AI Generated Response
+```
+                    React Frontend (Future)
+                              │
+                              ▼
+                       FastAPI Backend
+                              │
+      ┌───────────────────────┼────────────────────────┐
+      ▼                       ▼                        ▼
+ Authentication         Memory Services         Chat Services
+      │                       │                        │
+      ▼                       ▼                        ▼
+ PostgreSQL           AI Intelligence        Conversation Engine
+      │                       │                        │
+      ▼                       ▼                        ▼
+ pgvector          Hybrid Retrieval         Prompt Builder
+      │                       │                        │
+      ▼                       ▼                        ▼
+ Neo4j             Personalization         Google Gemini
+                              │
+                              ▼
+                   Evaluation & Analytics
+```
 
 ---
 
@@ -326,11 +407,14 @@ Authentication     Memory Service      Chat Service
 
 - PostgreSQL
 - pgvector
+- Neo4j
 
 ## Artificial Intelligence
 
 - Sentence Transformers
 - all-MiniLM-L6-v2
+- Cross Encoder (MS MARCO MiniLM)
+- spaCy
 - Google Gemini API
 - Retrieval-Augmented Generation (RAG)
 
@@ -344,37 +428,29 @@ Authentication     Memory Service      Chat Service
 
 # Future Components
 
-Planned Features
-
-
-## Phase 7
-- Automatic Memory Extraction
-- Context Window Management
-- Memory Ranking
-- Memory Summarization
-- Token Optimization
-
 ## Phase 8
 
 - Document Intelligence
-- Document Processing
+- OCR
 - Chunking
 - Document Embeddings
-- Semantic Document Search
+- Document Retrieval
 
 ## Phase 9
 
-- Voice Assistant
+- Voice Intelligence
 - Whisper Integration
 - Voice Memories
-- Voice Conversations
+- Image Understanding
+- Multimodal Retrieval
 
 ## Phase 10
+
 - Decision Engine
-- Personalized Recommendations
-- Context-Aware Planning
-- Knowledge Graph
-- Multi-modal Memory
+- Autonomous Planning
+- Goal Tracking
+- Recommendation Engine
+- Agentic Workflows
 
 ---
 
@@ -387,6 +463,7 @@ Planned Features
 - FastAPI
 - PostgreSQL
 - pgvector
+- Neo4j
 - VS Code
 
 ## Production (Planned)
@@ -396,8 +473,7 @@ Planned Features
 - AWS
 - HTTPS
 - PostgreSQL
-- pgvector
-- Google Gemini / OpenAI
+- Neo4j
 - Nginx
 - CI/CD Pipeline
 
@@ -405,18 +481,20 @@ Planned Features
 
 # Summary
 
-The system has evolved into a conversational Retrieval-Augmented Generation (RAG) powered AI assistant capable of maintaining persistent chat sessions and context-aware conversations.
+With the completion of **Phase 7**, the AI Personal Memory & Decision Assistant has evolved into a production-grade intelligent memory platform.
 
-The architecture now combines:
+The system now combines:
 
 - Secure authentication
-- Memory CRUD operations
-- Semantic vector search
-- Prompt engineering
-- Gemini LLM integration
-- AI-powered chat
-- Conversation history
-- Persistent chat sessions
-- Multi-turn conversations
+- Automatic memory understanding
+- Knowledge graph construction
+- Hybrid semantic and keyword retrieval
+- Cross-encoder reranking
+- Personalized memory retrieval
+- Long-term memory management
+- Retrieval-Augmented Generation (RAG)
+- AI observability and analytics
+- Performance monitoring
+- Persistent conversations
 
-The modular service-oriented architecture ensures scalability, maintainability, and flexibility for future enhancements such as conversational memory, automatic memory extraction, intelligent decision support, and multi-modal AI capabilities.
+The modular service-oriented architecture provides a scalable foundation for future expansion into document intelligence, multimodal AI, autonomous reasoning, and advanced decision-support capabilities.

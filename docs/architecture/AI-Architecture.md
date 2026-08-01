@@ -4,9 +4,9 @@
 
 **Module:** Artificial Intelligence
 
-**Architecture Version:** v0.6.0
+Architecture Version: v0.7.0
 
-**Last Updated:** After Phase 6
+Last Updated: After Phase 7
 
 ---
 
@@ -16,20 +16,29 @@ The Artificial Intelligence layer is responsible for enabling semantic understan
 
 Unlike traditional applications that rely on exact keyword matching, the AI layer converts every memory into a dense numerical representation called an **embedding**. These embeddings capture the semantic meaning of stored information, allowing the application to retrieve memories based on intent and context rather than exact wording.
 
-With the completion of **Phase 6**, the AI subsystem now combines:
+With the completion of **Phase 7**, the AI subsystem has evolved into a production-grade intelligent memory architecture that combines advanced memory understanding, hybrid retrieval, long-term memory management, personalization, observability, analytics, and Retrieval-Augmented Generation (RAG).
+
+The AI subsystem now combines:
 
 - Long-term semantic memory
 - Short-term conversation history
-- Session-based conversations
-- Embedding Generation
-- Vector Storage
-- Semantic Search
-- Retrieval Engine
+- Automatic memory extraction
+- Memory classification
+- Metadata enrichment
+- Knowledge graph generation
+- Hybrid semantic + keyword retrieval
+- Query rewriting
+- Cross-encoder reranking
+- Personalized retrieval
+- Intelligent context selection
+- Long-term memory management
+- AI observability
+- Retrieval analytics
+- Evaluation dashboards
 - Prompt Builder
-- Retrieval-Augmented Generation (RAG)
-- Gemini LLM Integration
+- Google Gemini Integration
 
-The retrieval engine now combines **semantic memories** with **recent conversation history** before constructing prompts for the Large Language Model. This enables the assistant to understand follow-up questions, maintain conversational context, and generate personalized, memory-grounded responses.
+The retrieval engine now combines conversation history, semantic search, keyword search, metadata filtering, AI reranking, and personalized ranking before constructing prompts for the Large Language Model, enabling more accurate and context-aware responses.
 
 Future phases will further extend this architecture with automatic memory extraction, document intelligence, voice intelligence, image understanding, and intelligent decision support.
 
@@ -37,70 +46,41 @@ Future phases will further extend this architecture with automatic memory extrac
 
 # AI Layer Overview
 
-```
-                   User
-
-                     │
-
-                     ▼
-
-            Natural Language
-
-                     │
-
-                     ▼
-
-          Conversation History
-
-                     │
-
-                     ▼
-
-          Embedding Generation
-
-                     │
-
-                     ▼
-
-            Dense Vector (384)
-
-                     │
-
-                     ▼
-
-        PostgreSQL + pgvector
-
-                     │
-
-                     ▼
-
-         Top-K Memory Retrieval
-
-                     │
-
-                     ▼
-
-            Prompt Builder
- (History + Memories + Instructions)
-
-                     │
-
-                     ▼
-
-              Gemini LLM
-
-                     │
-
-                     ▼
-
-          AI Generated Response
-
-                     │
-
-                     ▼
-
-        Store Chat Messages
-```
+                     User Query
+                          │
+                          ▼
+              Conversation Context
+                          │
+                          ▼
+          Context Retrieval Service
+                          │
+                          ▼
+             Query Rewrite Service
+                          │
+                          ▼
+              Hybrid Retrieval Engine
+          (Semantic + Keyword + Metadata)
+                          │
+                          ▼
+           Cross Encoder Re-ranking
+                          │
+                          ▼
+             Personalization Engine
+                          │
+                          ▼
+             Intelligent Context Selector
+                          │
+                          ▼
+                 Prompt Builder
+                          │
+                          ▼
+                   Google Gemini
+                          │
+                          ▼
+               AI Generated Response
+                          │
+                          ▼
+          Evaluation & Analytics Logging
 
 ---
 
@@ -113,7 +93,11 @@ User Question
 
 ↓
 
-Retrieve Conversation History
+Conversation Context
+
+↓
+
+Query Rewrite
 
 ↓
 
@@ -121,15 +105,27 @@ Generate Query Embedding
 
 ↓
 
-Semantic Vector Search
+Semantic Search
+
++
+
+Keyword Search
 
 ↓
 
-Top-K Relevant Memories
+Hybrid Merge
 
 ↓
 
-Similarity Threshold
+Cross Encoder Re-ranking
+
+↓
+
+Personalization
+
+↓
+
+Context Selection
 
 ↓
 
@@ -145,7 +141,11 @@ Store Chat Messages
 
 ↓
 
-AI Generated Response
+Evaluation Logging
+
+↓
+
+AI Response
 ```
 
 ---
@@ -275,6 +275,15 @@ Responsibilities
 - Store conversation messages
 - Return the final AI response
 
+Additional Phase 7 Responsibilities
+
+- Rewrite search queries
+- Perform hybrid retrieval
+- Execute cross-encoder reranking
+- Apply personalized ranking
+- Perform context-aware retrieval
+- Record AI evaluation metrics
+- Log observability metrics
 The Chat Service orchestrates the complete conversational Retrieval-Augmented Generation (RAG) pipeline.
 
 ---
@@ -315,7 +324,130 @@ Responsibilities
 - Maintain message ordering
 
 This service provides the short-term conversational memory used by the AI assistant.
+## 8. Query Rewrite Service
+Location
 
+backend/app/services/query_rewrite_service.py
+
+Responsibilities
+
+- Expand search queries
+- Improve semantic retrieval
+- Improve keyword retrieval
+
+## 9. Cross Encoder Service
+Location
+
+backend/app/services/cross_encoder_service.py
+
+Responsibilities
+
+- AI reranking
+- Cross-encoder scoring
+- Improve retrieval precision
+
+## 10. Personalization Service
+
+Location
+
+```
+backend/app/services/personalization_service.py
+```
+
+Responsibilities
+
+- Compute personalization scores for retrieved memories.
+- Rank memories using user interaction history.
+- Consider memory importance during retrieval.
+- Consider confidence scores during ranking.
+- Incorporate access frequency and recency.
+- Improve retrieval relevance based on user behavior.
+
+The Personalization Service ensures that search results are tailored to each user by combining retrieval quality with memory importance and interaction history.
+
+---
+
+## 11. Context Retrieval Service
+
+Location
+
+```
+backend/app/services/context_retrieval_service.py
+```
+
+Responsibilities
+
+- Analyze previous conversation history.
+- Resolve follow-up questions.
+- Rewrite context-dependent queries.
+- Build complete search queries before retrieval.
+- Improve conversational memory retrieval.
+
+This service enables the AI assistant to understand references such as pronouns or follow-up questions without requiring the user to repeat previous information.
+
+---
+
+## 12. Diversification Service
+
+Location
+
+```
+backend/app/services/diversification_service.py
+```
+
+Responsibilities
+
+- Reduce duplicate search results.
+- Increase diversity among retrieved memories.
+- Improve retrieval quality.
+- Ensure a wider range of relevant memories are selected.
+
+The Diversification Service prevents highly similar memories from dominating search results, producing a more balanced context for the language model.
+
+---
+
+## 13. Evaluation Service
+
+Location
+
+```
+backend/app/services/evaluation_service.py
+```
+
+Responsibilities
+
+- Log every AI request.
+- Store retrieval statistics.
+- Store response statistics.
+- Record retrieval quality metrics.
+- Save execution timings.
+- Support AI evaluation and analytics dashboards.
+
+The Evaluation Service provides detailed insights into the performance of the Retrieval-Augmented Generation (RAG) pipeline and enables continuous monitoring of AI quality.
+
+---
+
+## 14. Observability Service
+
+Location
+
+```
+backend/app/services/observability_service.py
+```
+
+Responsibilities
+
+- Measure execution time of each RAG stage.
+- Monitor retrieval latency.
+- Monitor context selection time.
+- Monitor prompt construction time.
+- Monitor LLM generation time.
+- Record total request execution time.
+- Support production performance monitoring.
+
+The Observability Service enables fine-grained performance analysis of the AI pipeline and provides the metrics required for system optimization and production monitoring.
+
+---
 # Retrieval-Augmented Generation (RAG)
 
 Phase 5 introduced Retrieval-Augmented Generation (RAG), enabling the assistant to answer questions using the user's stored memories instead of relying solely on the Large Language Model's pretrained knowledge.
@@ -464,27 +596,50 @@ AI Response
 # Current AI Architecture
 
 ```
-                    User
-                      │
-                      ▼
-                 Chat Service
-                      │
-      ┌───────────────┼────────────────┐
-      ▼               ▼                ▼
-Conversation    Embedding Service  Prompt Builder
- History             │                  │
-      │              ▼                  ▼
-      │      Sentence Transformer  Retrieved Memories
-      │                                 │
-      └───────────────┬─────────────────┘
-                      ▼
-                 Gemini LLM
-                      │
-                      ▼
-            Store Chat Messages
-                      │
-                      ▼
-             AI Generated Response
+                                              User
+                            │
+                            ▼
+                     Chat Service
+                            │
+        ┌───────────────────┼─────────────────────────────┐
+        ▼                   ▼                             ▼
+Conversation         Context Retrieval            Embedding Service
+ History                  Service                        │
+        │                   │                            ▼
+        │                   ▼                 Sentence Transformer
+        │           Query Rewrite Service              │
+        │                   │                          │
+        └───────────────────┼──────────────────────────┘
+                            ▼
+                  Hybrid Retrieval Engine
+       (Semantic + Keyword + Metadata Search)
+                            │
+                            ▼
+                Cross Encoder Re-ranking
+                            │
+                            ▼
+                 Personalization Service
+                            │
+                            ▼
+                Diversification Service
+                            │
+                            ▼
+               Intelligent Context Selector
+                            │
+                            ▼
+                     Prompt Builder
+                            │
+                            ▼
+                      Google Gemini
+                            │
+                            ▼
+          Evaluation & Observability Services
+                            │
+                            ▼
+                  AI Generated Response
+                            │
+                            ▼
+                  Store Chat Messages
 ```
 
 ---
@@ -572,55 +727,25 @@ AI Response
 The AI subsystem currently supports:
 
 - Automatic embedding generation
-- Automatic embedding updates
-- Dense vector representation
-- Vector database storage
-- Semantic similarity search
-- Retrieval of relevant memories
-- Retrieval-Augmented Generation (RAG)
-- Conversation history retrieval
-- Session-based conversations
-- Multi-turn dialogue
-- Context-aware prompt construction
-- Prompt engineering
-- Gemini LLM integration
-- AI-generated responses
-- Persistent chat history
-- Graceful LLM error handling
-- Modular AI service architecture
-
----
-
-# Current Limitations
-
-Although the AI subsystem now supports conversational Retrieval-Augmented Generation, several advanced AI capabilities are intentionally deferred to future phases.
-
-The current implementation does **not yet support**:
-
 - Automatic memory extraction
-- Intelligent memory ranking
-- Context window optimization
-- Memory summarization
-- Token optimization
-- Document-aware RAG
-- Voice-aware RAG
-- Image-aware RAG
-- Knowledge Graph integration
-
----
-
-# Future AI Roadmap
-
-## Phase 7
-
-Introduce more intelligent memory management by implementing:
-
-- Automatic Memory Extraction
-- Context Window Management
-- Memory Ranking
-- Memory Summarization
-- Token Optimization
-- Intelligent Context Selection
+- Memory classification
+- Metadata enrichment
+- Sentiment analysis
+- Knowledge graph generation
+- Hybrid semantic + keyword retrieval
+- Query rewriting
+- Cross-encoder reranking
+- Personalized retrieval
+- Context-aware retrieval
+- Intelligent context selection
+- Duplicate detection
+- Long-term memory management
+- AI request logging
+- Retrieval analytics
+- AI observability
+- Evaluation dashboards
+- Conversation-aware Retrieval-Augmented Generation
+- Gemini integration
 
 ---
 
@@ -748,22 +873,25 @@ This design improves readability, testing, and long-term maintainability.
 
 ---
 
-# Summary
+## Summary
 
-The AI subsystem has evolved from a semantic retrieval engine into a **conversational Retrieval-Augmented Generation (RAG)** system.
+The AI subsystem has evolved from a conversational Retrieval-Augmented Generation (RAG) system into a production-grade intelligent memory architecture.
 
-By combining:
+With the completion of **Phase 7**, the assistant now supports:
 
-- Sentence Transformers
-- PostgreSQL
-- pgvector
-- Semantic Vector Search
-- Conversation History
-- Prompt Engineering
-- Google Gemini
+- Automatic memory understanding and enrichment
+- Named entity extraction and metadata generation
+- Knowledge graph construction using Neo4j
+- Hybrid semantic and keyword retrieval
+- Query rewriting and context-aware retrieval
+- Cross-encoder AI reranking
+- Personalized memory retrieval
+- Long-term memory lifecycle management
+- Intelligent context selection
+- AI observability and performance monitoring
+- Retrieval analytics and evaluation dashboards
+- Production-style Retrieval-Augmented Generation (RAG)
 
-the application can retrieve relevant personal memories, maintain conversational context, and generate accurate, personalized responses.
+By combining Sentence Transformers, PostgreSQL, pgvector, Neo4j, Cross Encoder models, Google Gemini, and a modular AI service architecture, the system is capable of delivering highly relevant, context-aware, and personalized responses while continuously monitoring retrieval quality and overall AI performance.
 
-With the completion of **Phase 6**, the assistant now supports persistent chat sessions, multi-turn conversations, and context-aware AI interactions while preserving the modular architecture required for future expansion.
-
-Future phases will build upon this foundation by introducing automatic memory extraction, document intelligence, multimodal AI, knowledge graphs, and intelligent decision-making capabilities.
+This architecture establishes a scalable foundation for future phases involving document intelligence, multimodal AI, autonomous reasoning, and advanced decision support.
