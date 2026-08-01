@@ -13,7 +13,10 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
-
+from ..services.retrieval_analytics_service import (
+    retrieval_analytics_service,
+)
+from ..models.retrieval_log import RetrievalLog
 from ..services.memory_analytics_service import (
     memory_analytics_service,
 )
@@ -819,4 +822,16 @@ def get_memory_analytics(
         db=db,
         user_id=current_user.id,
     )
-
+@router.get("/analytics/retrieval")
+def get_retrieval_logs(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return (
+        db.query(RetrievalLog)
+        .filter(RetrievalLog.user_id == current_user.id)
+        .order_by(RetrievalLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )

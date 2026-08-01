@@ -1,7 +1,9 @@
 import time
 
 from sqlalchemy.orm import Session
-
+from app.services.retrieval_analytics_service import (
+    retrieval_analytics_service,
+)
 from app.core.config import (
     CONVERSATION_HISTORY_LIMIT,
     RAG_SIMILARITY_THRESHOLD,
@@ -196,6 +198,19 @@ class ChatService:
                     time.perf_counter() - total_start
                 ) * 1000,
             )
+            retrieval_analytics_service.log(
+            db=db,
+            user_id=user_id,
+            chat_session_id=session_id,
+            query=question,
+            retrieved_count=len(memories),
+            selected_count=len(selected_memories),
+            average_similarity=(
+                sum(similarities) / len(similarities)
+                if similarities else 0.0
+            ),
+            retrieval_time_ms=retrieval_time,
+        )
 
             return {
                 "answer": answer,
