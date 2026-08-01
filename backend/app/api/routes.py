@@ -14,6 +14,12 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..services.retrieval_quality_service import (
+    retrieval_quality_service,
+)
+from ..schemas.retrieval_quality import (
+    RetrievalQualityResponse,
+)
 from ..models.system_metric import SystemMetric
 from ..services.retrieval_analytics_service import (
     retrieval_analytics_service,
@@ -856,3 +862,16 @@ def system_health(
     current_user: User = Depends(get_current_user),
 ):
     return health_service.get_health(db)
+
+@router.get(
+    "/analytics/retrieval-quality",
+    response_model=RetrievalQualityResponse,
+)
+def get_retrieval_quality(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return retrieval_quality_service.calculate_quality(
+        db=db,
+        user_id=current_user.id,
+    )
