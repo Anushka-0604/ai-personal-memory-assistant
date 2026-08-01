@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy.orm import Session
 
 from app.core.config import (
@@ -19,6 +21,7 @@ from app.services.conversation_retrieval_service import (
 from app.services.conversation_summary_service import (
     ConversationSummaryService,
 )
+from app.services.evaluation_service import EvaluationService
 from app.services.llm_service import LLMService
 from app.services.memory_service import search_memories
 from app.services.prompt_builder import PromptBuilder
@@ -44,6 +47,13 @@ class ChatService:
         question: str,
         top_k: int = 5,
     ):
+        total_start = time.perf_counter()
+
+        retrieval_time = 0.0
+        context_time = 0.0
+        prompt_time = 0.0
+        llm_time = 0.0
+
         # -------------------------------------------------------------
         # Step 1: Load previous conversation
         # -------------------------------------------------------------
@@ -119,6 +129,8 @@ class ChatService:
         # -------------------------------------------------------------
         # Step 8: Retrieve memories
         # -------------------------------------------------------------
+        retrieval_start = time.perf_counter()
+
         memories = search_memories(
             db=db,
             user_id=user_id,
@@ -126,14 +138,24 @@ class ChatService:
             top_k=top_k,
         )
 
+        retrieval_time = (
+            time.perf_counter() - retrieval_start
+        ) * 1000
+
         # -------------------------------------------------------------
         # Step 9: Select relevant memories
         # -------------------------------------------------------------
+        context_start = time.perf_counter()
+
         selected_memories = context_selector.select(
             memories=memories,
             similarity_threshold=RAG_SIMILARITY_THRESHOLD,
             max_memories=top_k,
         )
+
+        context_time = (
+            time.perf_counter() - context_start
+        ) * 1000
 
         if not selected_memories:
             answer = (
@@ -150,12 +172,39 @@ class ChatService:
                 ),
             )
 
+            EvaluationService.log_request(
+                db=db,
+                user_id=user_id,
+                chat_session_id=session_id,
+                query=question,
+                retrieval_count=len(memories),
+                selected_count=0,
+                average_similarity=0.0,
+                average_importance=0.0,
+                average_context_score=0.0,
+                precision_score=0.0,
+                recall_score=0.0,
+                response_generated=False,
+                response_length=len(answer),
+                embedding_time_ms=0.0,
+                retrieval_time_ms=retrieval_time,
+                ranking_time_ms=0.0,
+                context_time_ms=context_time,
+                prompt_time_ms=0.0,
+                llm_time_ms=0.0,
+                total_time_ms=(
+                    time.perf_counter() - total_start
+                ) * 1000,
+            )
+
             return {
                 "answer": answer,
                 "retrieved_memories": [],
             }
 
-        # -------------------------------------------------------------
+        # ---------- CONTINUED IN PART 2 ----------
+
+                # -------------------------------------------------------------
         # Step 10: Extract memory text
         # -------------------------------------------------------------
         memory_texts = [
@@ -166,6 +215,8 @@ class ChatService:
         # -------------------------------------------------------------
         # Step 11: Build unified context
         # -------------------------------------------------------------
+        context_start = time.perf_counter()
+
         context = (
             ConversationMemoryService.build_context(
                 memories=memory_texts,
@@ -173,27 +224,51 @@ class ChatService:
             )
         )
 
+        context_time += (
+            time.perf_counter() - context_start
+        ) * 1000
+
         # -------------------------------------------------------------
         # Step 12: Build chat prompt
         # -------------------------------------------------------------
+        prompt_start = time.perf_counter()
+
         prompt = PromptBuilder.build_chat_prompt(
             user_question=resolved_question,
             context=context,
         )
 
+        prompt_time = (
+            time.perf_counter() - prompt_start
+        ) * 1000
+
         # -------------------------------------------------------------
         # Step 13: Generate AI response
         # -------------------------------------------------------------
+        response_generated = True
+
         try:
             print("\n========== FINAL PROMPT ==========")
             print(prompt)
             print("==================================\n")
 
+            llm_start = time.perf_counter()
+
             answer = self.llm_service.generate_response(
                 prompt
             )
 
+            llm_time = (
+                time.perf_counter() - llm_start
+            ) * 1000
+
         except Exception:
+            response_generated = False
+
+            llm_time = (
+                time.perf_counter() - llm_start
+            ) * 1000
+
             answer = (
                 "I'm sorry, but I couldn't generate a response "
                 "at the moment. Please try again later."
@@ -211,7 +286,59 @@ class ChatService:
             ),
         )
 
+        # -------------------------------------------------------------
+        # Step 15: Evaluation Logging
+        # -------------------------------------------------------------
+        similarities = [
+            memory.get("similarity", 0.0)
+            for memory in selected_memories
+        ]
+
+        importances = [
+            memory.get("importance", 0.0)
+            for memory in selected_memories
+        ]
+
+        context_scores = [
+            memory.get("context_score", 0.0)
+            for memory in selected_memories
+        ]
+
+        EvaluationService.log_request(
+            db=db,
+            user_id=user_id,
+            chat_session_id=session_id,
+            query=question,
+            retrieval_count=len(memories),
+            selected_count=len(selected_memories),
+            average_similarity=(
+                sum(similarities) / len(similarities)
+                if similarities else 0.0
+            ),
+            average_importance=(
+                sum(importances) / len(importances)
+                if importances else 0.0
+            ),
+            average_context_score=(
+                sum(context_scores) / len(context_scores)
+                if context_scores else 0.0
+            ),
+            precision_score=0.0,
+            recall_score=0.0,
+            response_generated=response_generated,
+            response_length=len(answer),
+            embedding_time_ms=0.0,
+            retrieval_time_ms=retrieval_time,
+            ranking_time_ms=0.0,
+            context_time_ms=context_time,
+            prompt_time_ms=prompt_time,
+            llm_time_ms=llm_time,
+            total_time_ms=(
+                time.perf_counter() - total_start
+            ) * 1000,
+        )
+
         return {
             "answer": answer,
             "retrieved_memories": selected_memories,
-        }
+        }      

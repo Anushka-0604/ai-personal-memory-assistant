@@ -13,6 +13,8 @@ from ..schemas.analytics import (
     MemoryStatistics,
     CategoryDistribution,
 )
+from ..services.evaluation_service import EvaluationService
+from ..models.ai_request_log import AIRequestLog
 from app.schemas.insights import MemoryInsights
 from app.services import insights_service
 from datetime import date
@@ -761,6 +763,41 @@ def get_organizations_for_location(
         ),
     }
 
+@router.get("/evaluation/latest")
+def get_latest_evaluations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return (
+        db.query(AIRequestLog)
+        .filter(AIRequestLog.user_id == current_user.id)
+        .order_by(AIRequestLog.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
+@router.get("/evaluation/latest")
+def get_latest_evaluations(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return EvaluationService.get_latest(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+
+@router.get("/evaluation/summary")
+def get_evaluation_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return EvaluationService.get_summary(
+        db=db,
+        user_id=current_user.id,
+    )
 
 
 
