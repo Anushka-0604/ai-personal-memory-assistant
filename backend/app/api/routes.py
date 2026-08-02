@@ -1,5 +1,12 @@
 # routes.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ..services.dashboard_service import dashboard_service
@@ -40,7 +47,17 @@ from ..models.retrieval_log import RetrievalLog
 from ..services.memory_analytics_service import (
     memory_analytics_service,
 )
+from ..schemas.document import (
+    DocumentResponse,
+)
 
+from ..services.document_service import (
+    create_document,
+)
+
+from ..services.file_storage_service import (
+    save_file,
+)
 from ..schemas.memory_analytics import (
     MemoryAnalyticsResponse,
 )
@@ -246,6 +263,30 @@ def get_all_memories(
         user_id=current_user.id,
     )
 
+
+@router.post(
+    "/documents/upload",
+    response_model=DocumentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def upload_document(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    file_info = save_file(file)
+
+    document = create_document(
+        db=db,
+        user_id=current_user.id,
+        filename=file_info["filename"],
+        original_filename=file_info["original_filename"],
+        file_type=file_info["file_type"],
+        file_size=file_info["file_size"],
+        file_path=file_info["file_path"],
+    )
+
+    return document
 
 @router.get("/memories/today")
 def get_today_memories(
