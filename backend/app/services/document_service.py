@@ -1,6 +1,9 @@
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
+from app.services.document_extraction_service import (
+    document_extraction_service,
+)
 
 
 # =====================================================
@@ -16,6 +19,12 @@ def create_document(
     file_size: int,
     file_path: str,
 ):
+    extracted_text = (
+        document_extraction_service.extract_text(
+            file_path
+        )
+    )
+
     document = Document(
         user_id=user_id,
         filename=filename,
@@ -23,6 +32,7 @@ def create_document(
         file_type=file_type,
         file_size=file_size,
         file_path=file_path,
+        extracted_text=extracted_text,
     )
 
     db.add(document)
