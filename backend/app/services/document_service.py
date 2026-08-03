@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 from app.services.document_extraction_service import (
     document_extraction_service,
+)
+from app.services.document_chunking_service import (
+    document_chunking_service,
 )
 
 
@@ -38,6 +42,24 @@ def create_document(
     db.add(document)
     db.commit()
     db.refresh(document)
+
+    chunks = (
+        document_chunking_service.chunk_text(
+            extracted_text
+        )
+    )
+
+    for index, chunk in enumerate(chunks):
+
+        document_chunk = DocumentChunk(
+            document_id=document.id,
+            chunk_index=index,
+            content=chunk,
+        )
+
+        db.add(document_chunk)
+
+    db.commit()
 
     return document
 
