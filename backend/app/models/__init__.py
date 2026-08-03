@@ -7,3 +7,4 @@ from .user_interaction import UserInteraction
 from .ai_request_log import AIRequestLog
 
 from .document import Document
+from .document_chunk import DocumentChunk
