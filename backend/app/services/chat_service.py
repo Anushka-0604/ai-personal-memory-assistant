@@ -13,6 +13,9 @@ from app.services.context_selector import context_selector
 from app.services.conversation_context_service import (
     ConversationContextService,
 )
+from app.services.document_search_service import (
+    semantic_document_search,
+)
 from app.services.conversation_memory_service import (
     ConversationMemoryService,
 )
@@ -148,6 +151,12 @@ class ChatService:
             top_k=top_k,
         )
 
+        document_chunks = semantic_document_search(
+            db=db,
+            query=search_query,
+            top_k=top_k,
+        )
+
         retrieval_time = (
             time.perf_counter() - retrieval_start
         ) * 1000
@@ -269,15 +278,23 @@ class ChatService:
             memory["content"]
             for memory in selected_memories
         ]
-
+        document_texts = [
+            chunk.content
+            for chunk, _ in document_chunks
+        ]
         # -------------------------------------------------------------
         # Step 11: Build unified context
         # -------------------------------------------------------------
         context_start = time.perf_counter()
 
+        combined_context = (
+            memory_texts +
+            document_texts
+        )
+
         context = (
             ConversationMemoryService.build_context(
-                memories=memory_texts,
+                memories=combined_context,
                 conversation_summary=conversation_summary,
             )
         )
