@@ -51,6 +51,10 @@ from ..schemas.document import (
     DocumentResponse,
 )
 
+from ..schemas.document_search import (
+    DocumentSearchResult,
+)
+
 from ..services.document_service import (
     create_document,
 )
@@ -58,6 +62,11 @@ from ..services.document_service import (
 from ..services.file_storage_service import (
     save_file,
 )
+
+from ..services.document_search_service import (
+    semantic_document_search,
+)
+
 from ..schemas.memory_analytics import (
     MemoryAnalyticsResponse,
 )
@@ -287,6 +296,41 @@ def upload_document(
     )
 
     return document
+
+
+@router.post(
+    "/documents/search",
+    response_model=list[DocumentSearchResult],
+)
+def search_documents(
+    query: str,
+    top_k: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    results = semantic_document_search(
+        db=db,
+        query=query,
+        top_k=top_k,
+    )
+
+    response = []
+
+    for chunk, distance in results:
+
+        response.append(
+            DocumentSearchResult(
+                document_id=chunk.document_id,
+                chunk_index=chunk.chunk_index,
+                content=chunk.content,
+                similarity=round(
+                    max(0.0, 1 - distance),
+                    4,
+                ),
+            )
+        )
+
+    return response
 
 @router.get("/memories/today")
 def get_today_memories(
