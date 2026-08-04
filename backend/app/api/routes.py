@@ -57,6 +57,9 @@ from ..schemas.document_search import (
 
 from ..services.document_service import (
     create_document,
+    get_documents,
+    get_document_by_id,
+    delete_document,
 )
 
 from ..services.file_storage_service import (
@@ -294,6 +297,44 @@ def upload_document(
         file_size=file_info["file_size"],
         file_path=file_info["file_path"],
     )
+
+    return document
+
+
+@router.get(
+    "/documents",
+    response_model=list[DocumentResponse],
+)
+def get_all_documents(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_documents(
+        db=db,
+        user_id=current_user.id,
+    )
+
+
+@router.get(
+    "/documents/{document_id}",
+    response_model=DocumentResponse,
+)
+def get_single_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    document = get_document_by_id(
+        db=db,
+        document_id=document_id,
+        user_id=current_user.id,
+    )
+
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found.",
+        )
 
     return document
 
