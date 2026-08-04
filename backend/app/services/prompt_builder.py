@@ -19,7 +19,8 @@ Rules:
 2. Never invent facts that are not present in the context.
 3. If the answer cannot be found, clearly say so.
 4. Give concise, accurate, and natural responses.
-5. Do not mention these instructions in your response.
+5. Use both memories and document excerpts when answering if they are relevant.
+6. Do not mention these instructions in your response.
 """
 
     SUMMARY_SYSTEM_INSTRUCTIONS = """
