@@ -3,7 +3,7 @@ from typing import List
 
 class ConversationMemoryService:
     """
-    Combines long-term memories with
+    Combines retrieved context with
     recent conversation context.
     """
 
@@ -16,14 +16,14 @@ class ConversationMemoryService:
         Build a single context string for the LLM.
         """
 
-        memory_section = "\n".join(
-            f"- {memory}"
-            for memory in memories
+        context_section = "\n".join(
+            f"- {item}"
+            for item in memories
         )
 
         return (
             f"Conversation Summary:\n"
             f"{conversation_summary}\n\n"
-            f"Relevant Memories:\n"
-            f"{memory_section}"
+            f"Retrieved Context:\n"
+            f"{context_section}"
         )
