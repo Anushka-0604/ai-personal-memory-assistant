@@ -1,6 +1,10 @@
 from PIL import Image
 import pytesseract
 
+from app.services.image_preprocessing_service import (
+    image_preprocessing_service,
+)
+
 
 class OCRService:
 
@@ -11,6 +15,12 @@ class OCRService:
         """
         Extract text from an image using OCR.
         """
+
+        image = (
+            image_preprocessing_service.preprocess(
+                image
+            )
+        )
 
         return pytesseract.image_to_string(
             image
@@ -23,6 +33,12 @@ class OCRService:
         """
         Extract text and calculate average OCR confidence.
         """
+
+        image = (
+            image_preprocessing_service.preprocess(
+                image
+            )
+        )
 
         data = pytesseract.image_to_data(
             image,
