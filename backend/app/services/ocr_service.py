@@ -1,6 +1,10 @@
 from PIL import Image
 import pytesseract
 
+from app.core.ocr_config import (
+    MIN_CONFIDENCE,
+    TESSERACT_CONFIG,
+)
 from app.services.image_preprocessing_service import (
     image_preprocessing_service,
 )
@@ -23,7 +27,8 @@ class OCRService:
         )
 
         return pytesseract.image_to_string(
-            image
+            image,
+            config=TESSERACT_CONFIG,
         ).strip()
 
     def extract_with_confidence(
@@ -42,6 +47,7 @@ class OCRService:
 
         data = pytesseract.image_to_data(
             image,
+            config=TESSERACT_CONFIG,
             output_type=pytesseract.Output.DICT,
         )
 
@@ -62,10 +68,11 @@ class OCRService:
             except ValueError:
                 continue
 
-            words.append(text)
+            if confidence < MIN_CONFIDENCE:
+                continue
 
-            if confidence >= 0:
-                confidences.append(confidence)
+            words.append(text)
+            confidences.append(confidence)
 
         average_confidence = (
             sum(confidences) / len(confidences)
