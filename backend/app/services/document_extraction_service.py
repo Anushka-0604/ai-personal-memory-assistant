@@ -4,9 +4,11 @@ from PIL import Image
 from docx import Document
 from pdf2image import convert_from_path
 from pypdf import PdfReader
-import pytesseract
 
 from app.core import ocr_config
+from app.services.ocr_service import (
+    ocr_service,
+)
 
 
 class DocumentExtractionService:
@@ -55,23 +57,31 @@ class DocumentExtractionService:
 
         text = text.strip()
 
-        # ------------------------------------------------
-        # OCR fallback for scanned PDFs
-        # ------------------------------------------------
         if text:
             return text
 
         images = convert_from_path(file_path)
 
-        ocr_text = ""
+        extracted_text = ""
 
         for image in images:
-            ocr_text += (
-                pytesseract.image_to_string(image)
-                + "\n"
+
+            result = (
+                ocr_service.extract_with_confidence(
+                    image
+                )
             )
 
-        return ocr_text.strip()
+            print(
+                f"[OCR] Confidence: "
+                f"{result['confidence']}%"
+            )
+
+            extracted_text += (
+                result["text"] + "\n"
+            )
+
+        return extracted_text.strip()
 
     def _extract_docx(
         self,
@@ -104,9 +114,18 @@ class DocumentExtractionService:
 
         image = Image.open(file_path)
 
-        return pytesseract.image_to_string(
-            image
-        ).strip()
+        result = (
+            ocr_service.extract_with_confidence(
+                image
+            )
+        )
+
+        print(
+            f"[OCR] Confidence: "
+            f"{result['confidence']}%"
+        )
+
+        return result["text"]
 
 
 document_extraction_service = (
