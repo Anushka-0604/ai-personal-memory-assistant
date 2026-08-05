@@ -9,10 +9,7 @@ class DocumentChunkingService:
         chunk_size: int = 500,
     ) -> list[str]:
         """
-        Intelligent paragraph-aware chunking.
-
-        Large paragraphs are further split into
-        fixed-size chunks.
+        Paragraph-aware and sentence-aware chunking.
         """
 
         if not text.strip():
@@ -32,17 +29,12 @@ class DocumentChunkingService:
 
                 continue
 
-            start = 0
-
-            while start < len(paragraph):
-
-                end = start + chunk_size
-
-                chunks.append(
-                    paragraph[start:end].strip()
+            chunks.extend(
+                self._split_large_paragraph(
+                    paragraph,
+                    chunk_size,
                 )
-
-                start = end
+            )
 
         return chunks
 
@@ -50,12 +42,6 @@ class DocumentChunkingService:
         self,
         text: str,
     ) -> list[str]:
-        """
-        Split text into paragraphs.
-
-        Multiple blank lines are treated as
-        paragraph separators.
-        """
 
         paragraphs = re.split(
             r"\n\s*\n",
@@ -67,6 +53,57 @@ class DocumentChunkingService:
             for paragraph in paragraphs
             if paragraph.strip()
         ]
+
+    def _split_large_paragraph(
+        self,
+        paragraph: str,
+        chunk_size: int,
+    ) -> list[str]:
+        """
+        Split large paragraphs at sentence boundaries.
+        """
+
+        sentences = re.split(
+            r"(?<=[.!?])\s+",
+            paragraph,
+        )
+
+        chunks = []
+
+        current_chunk = ""
+
+        for sentence in sentences:
+
+            sentence = sentence.strip()
+
+            if not sentence:
+                continue
+
+            candidate = (
+                current_chunk + " " + sentence
+            ).strip()
+
+            if (
+                len(candidate)
+                <= chunk_size
+            ):
+                current_chunk = candidate
+
+            else:
+
+                if current_chunk:
+                    chunks.append(
+                        current_chunk
+                    )
+
+                current_chunk = sentence
+
+        if current_chunk:
+            chunks.append(
+                current_chunk
+            )
+
+        return chunks
 
 
 document_chunking_service = (
