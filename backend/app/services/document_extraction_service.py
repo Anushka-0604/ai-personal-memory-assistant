@@ -1,133 +1,165 @@
-from pathlib import Path
+from sqlalchemy.orm import Session
 
-from PIL import Image
-from docx import Document
-from pdf2image import convert_from_path
-from pypdf import PdfReader
-
-from app.core import ocr_config
-from app.services.ocr_service import (
-    ocr_service,
+from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
+from app.services.document_chunking_service import (
+    document_chunking_service,
+)
+from app.services.document_extraction_service import (
+    document_extraction_service,
+)
+from app.services.embedding_service import (
+    generate_embedding,
 )
 
 
-class DocumentExtractionService:
+# =====================================================
+# Create Document
+# =====================================================
 
-    def extract_text(
-        self,
-        file_path: str,
-    ) -> str:
+def create_document(
+    db: Session,
+    user_id: int,
+    filename: str,
+    original_filename: str,
+    file_type: str,
+    file_size: int,
+    file_path: str,
+):
+    extracted_text = (
+        document_extraction_service.extract_text(
+            file_path
+        )
+    )
 
-        extension = Path(file_path).suffix.lower()
+    document = Document(
+        user_id=user_id,
+        filename=filename,
+        original_filename=original_filename,
+        file_type=file_type,
+        file_size=file_size,
+        file_path=file_path,
+        extracted_text=extracted_text,
+    )
 
-        if extension == ".pdf":
-            return self._extract_pdf(file_path)
+    db.add(document)
+    db.commit()
+    db.refresh(document)
 
-        if extension == ".docx":
-            return self._extract_docx(file_path)
+    chunk_index = 0
 
-        if extension == ".txt":
-            return self._extract_txt(file_path)
+    # -------------------------------------------------
+    # PDF: Preserve page numbers
+    # -------------------------------------------------
+    if file_type.lower() == ".pdf":
 
-        if extension in {
-            ".jpg",
-            ".jpeg",
-            ".png",
-        }:
-            return self._extract_image(file_path)
-
-        raise ValueError(
-            f"Unsupported file type: {extension}"
+        pages = (
+            document_extraction_service.extract_pdf_pages(
+                file_path
+            )
         )
 
-    def _extract_pdf(
-        self,
-        file_path: str,
-    ) -> str:
+        for page in pages:
 
-        reader = PdfReader(file_path)
-
-        text = ""
-
-        for page in reader.pages:
-            page_text = page.extract_text()
-
-            if page_text:
-                text += page_text + "\n"
-
-        text = text.strip()
-
-        if text:
-            return text
-
-        images = convert_from_path(file_path)
-
-        extracted_text = ""
-
-        for image in images:
-
-            result = (
-                ocr_service.extract_with_confidence(
-                    image
+            chunks = (
+                document_chunking_service.chunk_text(
+                    page["text"]
                 )
             )
 
-            print(
-                f"[OCR] Confidence: "
-                f"{result['confidence']}%"
-            )
+            for chunk in chunks:
 
-            extracted_text += (
-                result["text"] + "\n"
-            )
+                embedding = generate_embedding(
+                    chunk
+                )
 
-        return extracted_text.strip()
+                document_chunk = DocumentChunk(
+                    document_id=document.id,
+                    chunk_index=chunk_index,
+                    page_number=page["page_number"],
+                    content=chunk,
+                    embedding=embedding,
+                )
 
-    def _extract_docx(
-        self,
-        file_path: str,
-    ) -> str:
+                db.add(document_chunk)
 
-        document = Document(file_path)
+                chunk_index += 1
 
-        return "\n".join(
-            paragraph.text
-            for paragraph in document.paragraphs
-        ).strip()
+    # -------------------------------------------------
+    # DOCX / TXT / Images
+    # -------------------------------------------------
+    else:
 
-    def _extract_txt(
-        self,
-        file_path: str,
-    ) -> str:
-
-        with open(
-            file_path,
-            "r",
-            encoding="utf-8",
-        ) as file:
-            return file.read().strip()
-
-    def _extract_image(
-        self,
-        file_path: str,
-    ) -> str:
-
-        image = Image.open(file_path)
-
-        result = (
-            ocr_service.extract_with_confidence(
-                image
+        chunks = (
+            document_chunking_service.chunk_text(
+                extracted_text
             )
         )
 
-        print(
-            f"[OCR] Confidence: "
-            f"{result['confidence']}%"
+        for chunk in chunks:
+
+            embedding = generate_embedding(
+                chunk
+            )
+
+            document_chunk = DocumentChunk(
+                document_id=document.id,
+                chunk_index=chunk_index,
+                page_number=None,
+                content=chunk,
+                embedding=embedding,
+            )
+
+            db.add(document_chunk)
+
+            chunk_index += 1
+
+    db.commit()
+
+    return document
+
+
+# =====================================================
+# Get All Documents
+# =====================================================
+
+def get_documents(
+    db: Session,
+    user_id: int,
+):
+    return (
+        db.query(Document)
+        .filter(Document.user_id == user_id)
+        .all()
+    )
+
+
+# =====================================================
+# Get Document By ID
+# =====================================================
+
+def get_document_by_id(
+    db: Session,
+    document_id: int,
+    user_id: int,
+):
+    return (
+        db.query(Document)
+        .filter(
+            Document.id == document_id,
+            Document.user_id == user_id,
         )
+        .first()
+    )
 
-        return result["text"]
 
+# =====================================================
+# Delete Document
+# =====================================================
 
-document_extraction_service = (
-    DocumentExtractionService()
-)
+def delete_document(
+    db: Session,
+    document: Document,
+):
+    db.delete(document)
+    db.commit()
