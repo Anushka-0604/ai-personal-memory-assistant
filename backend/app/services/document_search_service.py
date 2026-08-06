@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.schemas.document_search import (
-    DocumentCitation,
+    DocumentSearchResult,
+)
+from app.services.document_ranking_service import (
+    document_ranking_service,
 )
 from app.services.embedding_service import (
     generate_embedding,
@@ -19,27 +22,26 @@ def semantic_document_search(
     document_id: int | None = None,
     file_type: str | None = None,
     upload_date: date | None = None,
-) -> list[DocumentCitation]:
+) -> list[DocumentSearchResult]:
 
     query_embedding = generate_embedding(query)
 
     search_query = (
         db.query(
-            Document,
             DocumentChunk,
             DocumentChunk.embedding.cosine_distance(
                 query_embedding
             ).label("distance"),
         )
         .join(
-            DocumentChunk,
+            Document,
             Document.id == DocumentChunk.document_id,
         )
     )
 
     if document_id is not None:
         search_query = search_query.filter(
-            Document.id == document_id
+            DocumentChunk.document_id == document_id
         )
 
     if file_type is not None:
@@ -49,10 +51,10 @@ def semantic_document_search(
 
     if upload_date is not None:
         search_query = search_query.filter(
-            Document.created_at >= upload_date,
+            Document.created_at >= upload_date
         )
 
-    results = (
+    rows = (
         search_query
         .order_by(
             DocumentChunk.embedding.cosine_distance(
@@ -63,25 +65,25 @@ def semantic_document_search(
         .all()
     )
 
-    citations = []
+    results = []
 
-    for (
-        document,
-        chunk,
-        distance,
-    ) in results:
+    for chunk, distance in rows:
 
-        citations.append(
-            DocumentCitation(
-                document_id=document.id,
-                document_name=document.original_filename,
+        similarity = max(
+            0.0,
+            1.0 - float(distance),
+        )
+
+        results.append(
+            DocumentSearchResult(
+                document_id=chunk.document_id,
+                document_name=chunk.document.original_filename,
                 chunk_index=chunk.chunk_index,
                 content=chunk.content,
-                similarity=round(
-                    1 - float(distance),
-                    4,
-                ),
+                similarity=similarity,
             )
         )
 
-    return citations
+    return document_ranking_service.rank(
+        results
+    )
