@@ -2,11 +2,14 @@ from sqlalchemy.orm import Session
 
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
+from app.services.document_chunking_service import (
+    document_chunking_service,
+)
 from app.services.document_extraction_service import (
     document_extraction_service,
 )
-from app.services.document_chunking_service import (
-    document_chunking_service,
+from app.services.embedding_service import (
+    generate_embedding,
 )
 
 
@@ -51,10 +54,16 @@ def create_document(
 
     for index, chunk in enumerate(chunks):
 
+        embedding = generate_embedding(
+            chunk
+        )
+
         document_chunk = DocumentChunk(
             document_id=document.id,
             chunk_index=index,
+            page_number=None,
             content=chunk,
+            embedding=embedding,
         )
 
         db.add(document_chunk)

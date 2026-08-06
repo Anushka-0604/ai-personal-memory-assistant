@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 
-class DocumentCitation(BaseModel):
+class DocumentSearchResult(BaseModel):
     document_id: int
     document_name: str
     chunk_index: int
@@ -13,5 +13,9 @@ class DocumentCitation(BaseModel):
     )
 
 
+# Backward compatibility
+DocumentCitation = DocumentSearchResult
+
+
 class DocumentSearchResponse(BaseModel):
-    results: list[DocumentCitation]
+    results: list[DocumentSearchResult]
