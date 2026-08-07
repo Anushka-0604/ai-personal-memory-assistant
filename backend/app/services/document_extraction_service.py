@@ -1,165 +1,142 @@
-from sqlalchemy.orm import Session
+from pathlib import Path
 
-from app.models.document import Document
-from app.models.document_chunk import DocumentChunk
-from app.services.document_chunking_service import (
-    document_chunking_service,
-)
-from app.services.document_extraction_service import (
-    document_extraction_service,
-)
-from app.services.embedding_service import (
-    generate_embedding,
+from PIL import Image
+from docx import Document
+from pdf2image import convert_from_path
+from pypdf import PdfReader
+
+from app.services.ocr_service import (
+    ocr_service,
 )
 
 
-# =====================================================
-# Create Document
-# =====================================================
+class DocumentExtractionService:
 
-def create_document(
-    db: Session,
-    user_id: int,
-    filename: str,
-    original_filename: str,
-    file_type: str,
-    file_size: int,
-    file_path: str,
-):
-    extracted_text = (
-        document_extraction_service.extract_text(
-            file_path
-        )
-    )
+    def extract_text(
+        self,
+        file_path: str,
+    ) -> str:
 
-    document = Document(
-        user_id=user_id,
-        filename=filename,
-        original_filename=original_filename,
-        file_type=file_type,
-        file_size=file_size,
-        file_path=file_path,
-        extracted_text=extracted_text,
-    )
+        extension = Path(file_path).suffix.lower()
 
-    db.add(document)
-    db.commit()
-    db.refresh(document)
+        if extension == ".pdf":
+            return self._extract_pdf(file_path)
 
-    chunk_index = 0
+        if extension == ".docx":
+            return self._extract_docx(file_path)
 
-    # -------------------------------------------------
-    # PDF: Preserve page numbers
-    # -------------------------------------------------
-    if file_type.lower() == ".pdf":
+        if extension == ".txt":
+            return self._extract_txt(file_path)
 
-        pages = (
-            document_extraction_service.extract_pdf_pages(
-                file_path
-            )
+        if extension in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+        }:
+            return self._extract_image(file_path)
+
+        raise ValueError(
+            f"Unsupported file type: {extension}"
         )
 
-        for page in pages:
+    def extract_pdf_pages(
+        self,
+        file_path: str,
+    ) -> list[dict]:
 
-            chunks = (
-                document_chunking_service.chunk_text(
-                    page["text"]
+        reader = PdfReader(file_path)
+
+        pages = []
+
+        for index, page in enumerate(reader.pages):
+
+            text = page.extract_text()
+
+            if text and text.strip():
+
+                pages.append(
+                    {
+                        "page_number": index + 1,
+                        "text": text.strip(),
+                    }
+                )
+
+        if pages:
+            return pages
+
+        images = convert_from_path(file_path)
+
+        pages = []
+
+        for index, image in enumerate(images):
+
+            result = (
+                ocr_service.extract_with_confidence(
+                    image
                 )
             )
 
-            for chunk in chunks:
+            pages.append(
+                {
+                    "page_number": index + 1,
+                    "text": result["text"],
+                }
+            )
 
-                embedding = generate_embedding(
-                    chunk
-                )
+        return pages
 
-                document_chunk = DocumentChunk(
-                    document_id=document.id,
-                    chunk_index=chunk_index,
-                    page_number=page["page_number"],
-                    content=chunk,
-                    embedding=embedding,
-                )
+    def _extract_pdf(
+        self,
+        file_path: str,
+    ) -> str:
 
-                db.add(document_chunk)
+        pages = self.extract_pdf_pages(file_path)
 
-                chunk_index += 1
+        return "\n\n".join(
+            page["text"]
+            for page in pages
+        )
 
-    # -------------------------------------------------
-    # DOCX / TXT / Images
-    # -------------------------------------------------
-    else:
+    def _extract_docx(
+        self,
+        file_path: str,
+    ) -> str:
 
-        chunks = (
-            document_chunking_service.chunk_text(
-                extracted_text
+        document = Document(file_path)
+
+        return "\n".join(
+            paragraph.text
+            for paragraph in document.paragraphs
+        ).strip()
+
+    def _extract_txt(
+        self,
+        file_path: str,
+    ) -> str:
+
+        with open(
+            file_path,
+            "r",
+            encoding="utf-8",
+        ) as file:
+            return file.read().strip()
+
+    def _extract_image(
+        self,
+        file_path: str,
+    ) -> str:
+
+        image = Image.open(file_path)
+
+        result = (
+            ocr_service.extract_with_confidence(
+                image
             )
         )
 
-        for chunk in chunks:
-
-            embedding = generate_embedding(
-                chunk
-            )
-
-            document_chunk = DocumentChunk(
-                document_id=document.id,
-                chunk_index=chunk_index,
-                page_number=None,
-                content=chunk,
-                embedding=embedding,
-            )
-
-            db.add(document_chunk)
-
-            chunk_index += 1
-
-    db.commit()
-
-    return document
+        return result["text"]
 
 
-# =====================================================
-# Get All Documents
-# =====================================================
-
-def get_documents(
-    db: Session,
-    user_id: int,
-):
-    return (
-        db.query(Document)
-        .filter(Document.user_id == user_id)
-        .all()
-    )
-
-
-# =====================================================
-# Get Document By ID
-# =====================================================
-
-def get_document_by_id(
-    db: Session,
-    document_id: int,
-    user_id: int,
-):
-    return (
-        db.query(Document)
-        .filter(
-            Document.id == document_id,
-            Document.user_id == user_id,
-        )
-        .first()
-    )
-
-
-# =====================================================
-# Delete Document
-# =====================================================
-
-def delete_document(
-    db: Session,
-    document: Document,
-):
-    db.delete(document)
-    db.commit()
+document_extraction_service = (
+    DocumentExtractionService()
+)

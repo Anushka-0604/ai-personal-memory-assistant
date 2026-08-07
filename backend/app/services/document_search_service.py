@@ -40,6 +40,9 @@ def semantic_document_search(
             Document,
             Document.id == DocumentChunk.document_id,
         )
+        .filter(
+            DocumentChunk.embedding.is_not(None)
+        )
     )
 
     if document_id is not None:
@@ -82,6 +85,7 @@ def semantic_document_search(
                 document_id=chunk.document_id,
                 document_name=chunk.document.original_filename,
                 chunk_index=chunk.chunk_index,
+                page_number=chunk.page_number,
                 content=chunk.content,
                 similarity=similarity,
             )

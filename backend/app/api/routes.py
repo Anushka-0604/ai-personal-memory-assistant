@@ -7,6 +7,14 @@ from fastapi import (
     UploadFile,
     status,
 )
+from ..services.hybrid_chat_service import (
+    hybrid_chat_service,
+)
+
+from ..schemas.hybrid_chat import (
+    HybridChatRequest,
+    HybridChatResponse,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ..services.dashboard_service import dashboard_service
@@ -1094,4 +1102,28 @@ def document_chat(
     return DocumentChatResponse(
         answer=result["answer"],
         context=result["context"],
+    )
+
+
+@router.post(
+    "/hybrid-chat",
+    response_model=HybridChatResponse,
+)
+def hybrid_chat(
+    request: HybridChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = hybrid_chat_service.chat(
+        db=db,
+        user_id=current_user.id,
+        question=request.question,
+        top_k=request.top_k,
+    )
+
+    return HybridChatResponse(
+        answer=result["answer"],
+        context=result["context"],
+        memory_count=result["memory_count"],
+        document_count=result["document_count"],
     )
