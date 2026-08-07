@@ -5,6 +5,7 @@ class DocumentSearchResult(BaseModel):
     document_id: int
     document_name: str
     chunk_index: int
+    page_number: int | None = None
     content: str
     similarity: float
 

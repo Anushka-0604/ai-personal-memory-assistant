@@ -118,6 +118,15 @@ from ..schemas.chat_message import (
     ChatMessageResponse,
 )
 
+from ..services.document_chat_service import (
+    document_chat_service,
+)
+
+from ..schemas.document_chat import (
+    DocumentChatRequest,
+    DocumentChatResponse,
+)
+
 from ..services.memory_service import (
     create_memory,
     get_memories,
@@ -338,7 +347,33 @@ def get_single_document(
 
     return document
 
+@router.delete(
+    "/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_existing_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    document = get_document_by_id(
+        db=db,
+        document_id=document_id,
+        user_id=current_user.id,
+    )
 
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found.",
+        )
+
+    delete_document(
+        db=db,
+        document=document,
+    )
+
+    
 @router.post(
     "/documents/search",
     response_model=list[DocumentSearchResult],
@@ -1038,4 +1073,25 @@ def get_ai_dashboard(
     return ai_dashboard_service.get_dashboard(
         db=db,
         user_id=current_user.id,
+    )
+
+
+@router.post(
+    "/documents/chat",
+    response_model=DocumentChatResponse,
+)
+def document_chat(
+    request: DocumentChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = document_chat_service.chat(
+        db=db,
+        question=request.question,
+        top_k=request.top_k,
+    )
+
+    return DocumentChatResponse(
+        answer=result["answer"],
+        context=result["context"],
     )

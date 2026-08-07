@@ -1,0 +1,113 @@
+from sqlalchemy.orm import Session
+
+from app.services.embedding_service import (
+    generate_embedding,
+)
+from app.services.hybrid_context_service import (
+    hybrid_context_service,
+)
+from app.services.hybrid_prompt_builder import (
+    HybridPromptBuilder,
+)
+from app.services.llm_service import (
+    LLMService,
+)
+from app.services.memory_service import (
+    search_memories,
+)
+from app.services.document_search_service import (
+    semantic_document_search,
+)
+
+
+class HybridChatService:
+    """
+    Hybrid Retrieval-Augmented Generation.
+
+    Searches both:
+    - Personal memories
+    - Uploaded documents
+
+    and combines them into one response.
+    """
+
+    def __init__(self):
+        self.llm_service = LLMService()
+
+    def chat(
+        self,
+        db: Session,
+        user_id: int,
+        question: str,
+        top_k: int = 5,
+    ):
+
+        # -----------------------------------------
+        # Retrieve memories
+        # -----------------------------------------
+
+        memories = search_memories(
+            db=db,
+            user_id=user_id,
+            query=question,
+            top_k=top_k,
+        )
+
+        memory_texts = [
+            memory["content"]
+            for memory in memories
+        ]
+
+        # -----------------------------------------
+        # Retrieve documents
+        # -----------------------------------------
+
+        documents = semantic_document_search(
+            db=db,
+            query=question,
+            top_k=top_k,
+        )
+
+        # -----------------------------------------
+        # Build unified context
+        # -----------------------------------------
+
+        context = (
+            hybrid_context_service.build_context(
+                memories=memory_texts,
+                documents=documents,
+            )
+        )
+
+        # -----------------------------------------
+        # Build prompt
+        # -----------------------------------------
+
+        prompt = (
+            HybridPromptBuilder.build_prompt(
+                question=question,
+                context=context,
+            )
+        )
+
+        # -----------------------------------------
+        # Generate answer
+        # -----------------------------------------
+
+        answer = (
+            self.llm_service.generate_response(
+                prompt
+            )
+        )
+
+        return {
+            "answer": answer,
+            "context": context,
+            "memory_count": len(memories),
+            "document_count": len(documents),
+        }
+
+
+hybrid_chat_service = (
+    HybridChatService()
+)

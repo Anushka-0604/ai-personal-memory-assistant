@@ -6,7 +6,7 @@ from app.schemas.document_search import (
 class DocumentContextService:
     """
     Builds the final context sent to the LLM
-    from retrieved document chunks.
+    together with document citations.
     """
 
     def build_context(
@@ -22,6 +22,11 @@ class DocumentContextService:
             context.append(
                 f"[Document: {result.document_name}]"
             )
+
+            if hasattr(result, "page_number") and result.page_number is not None:
+                context.append(
+                    f"[Page: {result.page_number}]"
+                )
 
             context.append(
                 f"[Chunk: {result.chunk_index}]"
