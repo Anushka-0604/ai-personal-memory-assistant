@@ -13,6 +13,9 @@ from app.services.document_ranking_service import (
 from app.services.embedding_service import (
     generate_embedding,
 )
+from app.services.multi_document_retrieval_service import (
+    multi_document_retrieval_service,
+)
 
 
 def semantic_document_search(
@@ -22,8 +25,8 @@ def semantic_document_search(
     document_id: int | None = None,
     file_type: str | None = None,
     upload_date: date | None = None,
-) -> list[DocumentSearchResult]:
-
+    group_by_document: bool = False,
+):
     query_embedding = generate_embedding(query)
 
     search_query = (
@@ -84,6 +87,17 @@ def semantic_document_search(
             )
         )
 
-    return document_ranking_service.rank(
-        results
+    ranked_results = (
+        document_ranking_service.rank(
+            results
+        )
     )
+
+    if group_by_document:
+        return (
+            multi_document_retrieval_service.group_by_document(
+                ranked_results
+            )
+        )
+
+    return ranked_results
