@@ -4,6 +4,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
 )
@@ -62,6 +63,12 @@ class Document(Base):
     # Document classification
     document_category: Mapped[str | None] = mapped_column(
         String(50),
+        nullable=True,
+    )
+
+    # Extracted document keywords
+    keywords: Mapped[list[str] | None] = mapped_column(
+        JSON,
         nullable=True,
     )
 
