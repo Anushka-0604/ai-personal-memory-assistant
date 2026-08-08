@@ -14,6 +14,9 @@ from app.services.document_extraction_service import (
 from app.services.embedding_service import (
     generate_embedding,
 )
+from app.services.keyword_extraction_service import (
+    keyword_extraction_service,
+)
 
 
 # =====================================================
@@ -46,6 +49,17 @@ def create_document(
         )
     )
 
+    # =================================================
+    # Keyword Extraction
+    # =================================================
+
+    keywords = (
+        keyword_extraction_service.extract_keywords(
+            text=extracted_text,
+            top_k=10,
+        )
+    )
+
     document = Document(
         user_id=user_id,
         filename=filename,
@@ -55,6 +69,7 @@ def create_document(
         file_path=file_path,
         extracted_text=extracted_text,
         document_category=document_category,
+        keywords=keywords,
     )
 
     db.add(document)
