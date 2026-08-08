@@ -2,6 +2,9 @@ from sqlalchemy.orm import Session
 
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
+from app.services.classification_service import (
+    classification_service,
+)
 from app.services.document_chunking_service import (
     document_chunking_service,
 )
@@ -32,6 +35,17 @@ def create_document(
         )
     )
 
+    # =================================================
+    # Document Classification
+    # =================================================
+
+    document_category = (
+        classification_service.classify_document(
+            text=extracted_text,
+            filename=original_filename,
+        )
+    )
+
     document = Document(
         user_id=user_id,
         filename=filename,
@@ -40,17 +54,26 @@ def create_document(
         file_size=file_size,
         file_path=file_path,
         extracted_text=extracted_text,
+        document_category=document_category,
     )
 
     db.add(document)
     db.commit()
     db.refresh(document)
 
+    # =================================================
+    # Document Chunking
+    # =================================================
+
     chunks = (
         document_chunking_service.chunk_text(
             extracted_text
         )
     )
+
+    # =================================================
+    # Generate Embeddings
+    # =================================================
 
     for index, chunk in enumerate(chunks):
 
