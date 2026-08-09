@@ -11,6 +11,13 @@ class DocumentResponse(BaseModel):
     file_type: str
     file_size: int
     file_path: str
+
+    # Document metadata
+    document_category: str | None = None
+    keywords: list[str] | None = None
+    entities: list | None = None
+    relationships: list | None = None
+
     created_at: datetime
     updated_at: datetime
 

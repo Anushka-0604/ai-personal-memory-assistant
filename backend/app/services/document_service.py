@@ -17,6 +17,12 @@ from app.services.embedding_service import (
 from app.services.keyword_extraction_service import (
     keyword_extraction_service,
 )
+from app.services.ner_service import (
+    ner_service,
+)
+from app.services.relationship_extraction_service import (
+    relationship_extraction_service,
+)
 
 
 # =====================================================
@@ -60,6 +66,31 @@ def create_document(
         )
     )
 
+    # =================================================
+    # Named Entity Recognition
+    # =================================================
+
+    entities = (
+        ner_service.extract_entities(
+            extracted_text
+        )
+    )
+
+    # =================================================
+    # Relationship Extraction
+    # =================================================
+
+    relationships = (
+        relationship_extraction_service.extract_relationships(
+            extracted_text,
+            entities,
+        )
+    )
+
+    # =================================================
+    # Create Document with Enriched Metadata
+    # =================================================
+
     document = Document(
         user_id=user_id,
         filename=filename,
@@ -70,6 +101,8 @@ def create_document(
         extracted_text=extracted_text,
         document_category=document_category,
         keywords=keywords,
+        entities=entities,
+        relationships=relationships,
     )
 
     db.add(document)
