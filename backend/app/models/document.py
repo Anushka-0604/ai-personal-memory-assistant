@@ -78,6 +78,12 @@ class Document(Base):
         nullable=True,
     )
 
+    # Relationships extracted from the document
+    relationships: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
