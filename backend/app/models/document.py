@@ -72,6 +72,12 @@ class Document(Base):
         nullable=True,
     )
 
+    # Named entities extracted from the document
+    entities: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
