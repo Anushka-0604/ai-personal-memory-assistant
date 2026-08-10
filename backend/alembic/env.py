@@ -8,7 +8,7 @@ from app.models.memory import Memory
 import os
 
 from alembic import context
-
+from app.models.document_memory_link import DocumentMemoryLink
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 from app.models.ai_request_log import AIRequestLog
