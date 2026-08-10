@@ -1,8 +1,18 @@
+import re
+
+
 class RelationshipExtractionService:
     """
-    Extracts simple relationships between named entities
-    using lightweight rule-based patterns.
+    Extracts high-confidence relationships between named entities.
     """
+
+    # Only use reliable entity types for relationship extraction.
+    ALLOWED_ENTITY_LABELS = {
+        "PERSON",
+        "ORG",
+        "GPE",
+        "LOC",
+    }
 
     RELATION_PATTERNS = {
         "works_at": [
@@ -39,59 +49,192 @@ class RelationshipExtractionService:
             "belongs to",
             "member of",
         ],
+        "connected_to": [
+            "connected to",
+            "connected with",
+        ],
+        "manages": [
+            "manages",
+            "manage",
+        ],
+        "stores": [
+            "stores",
+            "store",
+        ],
+        "maintains": [
+            "maintains",
+            "maintain",
+        ],
+        "compares_with": [
+            "compares with",
+            "compares them with",
+            "compared with",
+        ],
+        "allows": [
+            "allows",
+            "allow",
+        ],
+        "supports": [
+            "supports",
+            "support",
+        ],
+        "retrieves": [
+            "retrieves",
+            "retrieve",
+        ],
+        "matches": [
+            "matches",
+            "match",
+        ],
     }
+
+    # Maximum number of characters allowed between
+    # an entity and a relationship phrase.
+    MAX_DISTANCE = 100
 
     def extract_relationships(
         self,
         text: str,
         entities: list[dict],
     ) -> list[dict]:
-        """
-        Extract relationships between entities using
-        predefined textual patterns.
-        """
 
         if not text or not entities:
             return []
 
         relationships = []
-        text_lower = text.lower()
 
-        for pattern_name, patterns in self.RELATION_PATTERNS.items():
-            for pattern in patterns:
-                start = 0
+        normalized_text = re.sub(
+            r"\s+",
+            " ",
+            text,
+        ).strip()
 
-                while True:
-                    position = text_lower.find(pattern, start)
+        sentences = re.split(
+            r"(?<=[.!?])\s+",
+            normalized_text,
+        )
 
-                    if position == -1:
-                        break
+        for sentence in sentences:
 
-                    before = text[:position].strip()
-                    after = text[
-                        position + len(pattern):
-                    ].strip()
+            sentence_lower = sentence.lower()
 
-                    subject = self._find_nearest_entity(
-                        before,
-                        entities,
-                        from_end=True,
+            sentence_entities = []
+
+            for entity in entities:
+
+                entity_text = entity.get(
+                    "text",
+                    "",
+                ).strip()
+
+                entity_label = entity.get("label")
+
+                # Ignore unreliable entity types.
+                if entity_label not in self.ALLOWED_ENTITY_LABELS:
+                    continue
+
+                if not entity_text:
+                    continue
+
+                position = sentence_lower.find(
+                    entity_text.lower()
+                )
+
+                if position != -1:
+
+                    sentence_entities.append(
+                        (
+                            position,
+                            position + len(entity_text),
+                            entity_text,
+                        )
                     )
 
-                    object_entity = self._find_nearest_entity(
-                        after,
-                        entities,
-                        from_end=False,
-                    )
+            if len(sentence_entities) < 2:
+                continue
 
-                    if (
-                        subject
-                        and object_entity
-                        and subject != object_entity
+            sentence_entities.sort(
+                key=lambda item: item[0]
+            )
+
+            for relationship_name, patterns in (
+                self.RELATION_PATTERNS.items()
+            ):
+
+                for pattern in patterns:
+
+                    for match in re.finditer(
+                        re.escape(pattern.lower()),
+                        sentence_lower,
                     ):
+
+                        relation_start = match.start()
+                        relation_end = match.end()
+
+                        subject = self._find_subject(
+                            sentence_entities,
+                            relation_start,
+                        )
+
+                        object_entity = self._find_object(
+                            sentence_entities,
+                            relation_end,
+                        )
+
+                        if not subject or not object_entity:
+                            continue
+
+                        # Find the actual entity positions.
+                        subject_position = next(
+                            (
+                                entity
+                                for entity in sentence_entities
+                                if entity[2] == subject
+                                and entity[1] <= relation_start
+                            ),
+                            None,
+                        )
+
+                        object_position = next(
+                            (
+                                entity
+                                for entity in sentence_entities
+                                if entity[2] == object_entity
+                                and entity[0] >= relation_end
+                            ),
+                            None,
+                        )
+
+                        if not subject_position or not object_position:
+                            continue
+
+                        # Reject relationships where entities
+                        # are too far away from the relation.
+                        subject_distance = (
+                            relation_start
+                            - subject_position[1]
+                        )
+
+                        object_distance = (
+                            object_position[0]
+                            - relation_end
+                        )
+
+                        if (
+                            subject_distance
+                            > self.MAX_DISTANCE
+                        ):
+                            continue
+
+                        if (
+                            object_distance
+                            > self.MAX_DISTANCE
+                        ):
+                            continue
+
                         relationship = {
                             "subject": subject,
-                            "relationship": pattern_name,
+                            "relationship": relationship_name,
                             "object": object_entity,
                         }
 
@@ -100,55 +243,47 @@ class RelationshipExtractionService:
                                 relationship
                             )
 
-                    start = position + len(pattern)
-
         return relationships
 
-    def _find_nearest_entity(
+    def _find_subject(
         self,
-        text: str,
-        entities: list[dict],
-        from_end: bool,
+        entities: list[tuple],
+        relation_start: int,
     ) -> str | None:
-        """
-        Find the nearest known entity in a piece of text.
-        """
 
-        candidates = []
-
-        for entity in entities:
-            entity_text = entity.get("text")
-
-            if not entity_text:
-                continue
-
-            position = text.lower().rfind(
-                entity_text.lower()
-            )
-
-            if not from_end:
-                position = text.lower().find(
-                    entity_text.lower()
-                )
-
-            if position != -1:
-                candidates.append(
-                    (position, entity_text)
-                )
+        candidates = [
+            entity
+            for entity in entities
+            if entity[1] <= relation_start
+        ]
 
         if not candidates:
             return None
 
-        if from_end:
-            return max(
-                candidates,
-                key=lambda item: item[0],
-            )[1]
+        return max(
+            candidates,
+            key=lambda item: item[1],
+        )[2]
+
+    def _find_object(
+        self,
+        entities: list[tuple],
+        relation_end: int,
+    ) -> str | None:
+
+        candidates = [
+            entity
+            for entity in entities
+            if entity[0] >= relation_end
+        ]
+
+        if not candidates:
+            return None
 
         return min(
             candidates,
             key=lambda item: item[0],
-        )[1]
+        )[2]
 
 
 relationship_extraction_service = (
