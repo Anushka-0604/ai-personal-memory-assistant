@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from ..services.neo4j_service import neo4j_service
 from ..services.hybrid_chat_service import (
     hybrid_chat_service,
 )
@@ -306,13 +307,41 @@ def upload_document(
     file_info = save_file(file)
 
     document = create_document(
-        db=db,
-        user_id=current_user.id,
-        filename=file_info["filename"],
-        original_filename=file_info["original_filename"],
-        file_type=file_info["file_type"],
-        file_size=file_info["file_size"],
-        file_path=file_info["file_path"],
+    db=db,
+    user_id=current_user.id,
+    filename=file_info["filename"],
+    original_filename=file_info["original_filename"],
+    file_type=file_info["file_type"],
+    file_size=file_info["file_size"],
+    file_path=file_info["file_path"],
+)
+
+    # =====================================================
+    # Save Document to Neo4j
+    # =====================================================
+
+    neo4j_service.create_document_node(
+        document_id=document.id,
+        filename=document.original_filename,
+        category=document.document_category,
+    )
+
+    # =====================================================
+    # Save Document Entities to Neo4j
+    # =====================================================
+
+    neo4j_service.create_document_entities(
+        document_id=document.id,
+        entities=document.entities or [],
+    )
+
+    # =====================================================
+    # Save Document Relationships to Neo4j
+    # =====================================================
+
+    neo4j_service.create_document_relationships(
+        document_id=document.id,
+        relationships=document.relationships or [],
     )
 
     return document

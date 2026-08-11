@@ -125,6 +125,93 @@ class Neo4jService:
                     entity_id=entity_id,
                 )
 
+    # =====================================================
+    # Create Document Relationships
+    # =====================================================
+
+    def create_document_relationships(
+        self,
+        document_id: int,
+        relationships: list,
+    ):
+
+        with neo4j_db.get_session() as session:
+
+            document_node_id = f"document_{document_id}"
+
+            for relationship in relationships:
+
+                subject = relationship.get(
+                    "subject",
+                    "",
+                ).strip()
+
+                relationship_type = relationship.get(
+                    "relationship",
+                    "RELATED",
+                ).strip()
+
+                object_entity = relationship.get(
+                    "object",
+                    "",
+                ).strip()
+
+                if not subject or not object_entity:
+                    continue
+
+                # Find the entity nodes belonging to this document.
+                result = session.run(
+                    """
+                    MATCH (d:Document {id: $document_id})
+                    MATCH (d)-[:CONTAINS_ENTITY]->(e:Entity)
+                    WHERE e.name = $entity_name
+                    RETURN e.id AS id
+                    """,
+                    document_id=document_node_id,
+                    entity_name=subject,
+                ).single()
+
+                subject_id = (
+                    result["id"]
+                    if result
+                    else None
+                )
+
+                result = session.run(
+                    """
+                    MATCH (d:Document {id: $document_id})
+                    MATCH (d)-[:CONTAINS_ENTITY]->(e:Entity)
+                    WHERE e.name = $entity_name
+                    RETURN e.id AS id
+                    """,
+                    document_id=document_node_id,
+                    entity_name=object_entity,
+                ).single()
+
+                object_id = (
+                    result["id"]
+                    if result
+                    else None
+                )
+
+                if not subject_id or not object_id:
+                    continue
+
+                # Create the relationship between the two entities.
+                session.run(
+                    """
+                    MATCH (a:Entity {id: $subject_id})
+                    MATCH (b:Entity {id: $object_id})
+
+                    MERGE (a)-[r:RELATED]->(b)
+
+                    SET r.type = $relationship
+                    """,
+                    subject_id=subject_id,
+                    object_id=object_id,
+                    relationship=relationship_type,
+                )
+
 
 # =====================================================
 # Singleton Service

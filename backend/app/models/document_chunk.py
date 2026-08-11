@@ -33,12 +33,6 @@ class DocumentChunk(Base):
         nullable=False,
     )
 
-    # Page number (used for PDF citations)
-    page_number: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-    )
-
     content: Mapped[str] = mapped_column(
         Text,
         nullable=False,

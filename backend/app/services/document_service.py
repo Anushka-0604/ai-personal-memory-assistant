@@ -132,7 +132,6 @@ def create_document(
         document_chunk = DocumentChunk(
             document_id=document.id,
             chunk_index=index,
-            page_number=None,
             content=chunk,
             embedding=embedding,
         )

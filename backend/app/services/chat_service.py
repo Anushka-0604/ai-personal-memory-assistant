@@ -269,6 +269,18 @@ class ChatService:
             return {
                 "answer": answer,
                 "retrieved_memories": [],
+                "retrieved_documents": [
+                    {
+                        "document_id": chunk.document_id,
+                        "chunk_index": chunk.chunk_index,
+                        "content": chunk.content,
+                        "similarity": round(
+                            max(0.0, 1 - distance),
+                            4,
+                        ),
+                    }
+                    for chunk, distance in document_chunks
+                ],
             }
 
         # -------------------------------------------------------------
@@ -476,6 +488,18 @@ class ChatService:
         )
 
         return {
-            "answer": answer,
-            "retrieved_memories": selected_memories,
-        }
+        "answer": answer,
+        "retrieved_memories": selected_memories,
+        "retrieved_documents": [
+            {
+                "document_id": chunk.document_id,
+                "chunk_index": chunk.chunk_index,
+                "content": chunk.content,
+                "similarity": round(
+                    max(0.0, 1 - distance),
+                    4,
+                ),
+            }
+            for chunk, distance in document_chunks
+        ],
+    }
