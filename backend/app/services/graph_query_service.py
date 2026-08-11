@@ -135,5 +135,31 @@ class GraphQueryService:
 
             return [record["organization"] for record in result]
 
+    # =====================================================
+    # Document Graph Queries
+    # =====================================================
+
+    def get_document_entities(self, document_id: int):
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (d:Document {id: $document_id})
+                      -[:CONTAINS_ENTITY]->(e:Entity)
+                RETURN e.name AS name,
+                       e.type AS type
+                ORDER BY name
+                """,
+                document_id=f"document_{document_id}",
+            )
+
+            return [
+                {
+                    "name": record["name"],
+                    "type": record["type"],
+                }
+                for record in result
+            ]
+
 
 graph_query_service = GraphQueryService()
