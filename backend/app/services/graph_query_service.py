@@ -161,5 +161,30 @@ class GraphQueryService:
                 for record in result
             ]
 
+    def get_document_relationships(self, document_id: int):
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (d:Document {id: $document_id})
+                      -[:CONTAINS_ENTITY]->(a:Entity)
+                      -[r:RELATED]->(b:Entity)
+                RETURN a.name AS subject,
+                       r.type AS relationship,
+                       b.name AS object
+                ORDER BY subject, relationship, object
+                """,
+                document_id=f"document_{document_id}",
+            )
+
+            return [
+                {
+                    "subject": record["subject"],
+                    "relationship": record["relationship"],
+                    "object": record["object"],
+                }
+                for record in result
+            ]
+
 
 graph_query_service = GraphQueryService()
