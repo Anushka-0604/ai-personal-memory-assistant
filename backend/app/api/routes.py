@@ -950,6 +950,28 @@ def get_document_relationships(document_id: int):
     }
 
 
+@router.get("/graph/entity/{entity_name}/connections")
+def get_entity_connections(entity_name: str):
+    return {
+        "entity": entity_name,
+        "connections": graph_query_service.get_entity_connections(
+            entity_name
+        ),
+    }
+
+@router.get("/graph/document/{document_id}")
+def get_document_graph(document_id: int):
+    return {
+        "document_id": document_id,
+        "entities": graph_query_service.get_document_entities(
+            document_id
+        ),
+        "relationships": graph_query_service.get_document_relationships(
+            document_id
+        ),
+    }
+
+
 @router.get("/graph/person/{person_name}/organizations")
 def get_organizations_for_person(person_name: str):
     return {

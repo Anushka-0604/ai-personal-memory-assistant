@@ -186,5 +186,31 @@ class GraphQueryService:
                 for record in result
             ]
 
+    # =====================================================
+    # Entity Connection Queries
+    # =====================================================
+
+    def get_entity_connections(self, entity_name: str):
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (a:Entity)-[r:RELATED]->(b:Entity)
+                WHERE a.name = $entity_name
+                RETURN b.name AS entity,
+                       r.type AS relationship
+                ORDER BY entity
+                """,
+                entity_name=entity_name,
+            )
+
+            return [
+                {
+                    "entity": record["entity"],
+                    "relationship": record["relationship"],
+                }
+                for record in result
+            ]
+
 
 graph_query_service = GraphQueryService()
