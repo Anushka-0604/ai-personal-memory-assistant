@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from app.services.graph_query_service import graph_query_service
 from ..services.neo4j_service import neo4j_service
 from ..services.hybrid_chat_service import (
     hybrid_chat_service,
@@ -926,6 +927,26 @@ def get_organizations():
 def get_locations():
     return {
         "locations": graph_query_service.get_locations(),
+    }
+
+
+@router.get("/graph/document/{document_id}/entities")
+def get_document_entities(document_id: int):
+    return {
+        "document_id": document_id,
+        "entities": graph_query_service.get_document_entities(
+            document_id
+        ),
+    }
+
+
+@router.get("/graph/document/{document_id}/relationships")
+def get_document_relationships(document_id: int):
+    return {
+        "document_id": document_id,
+        "relationships": graph_query_service.get_document_relationships(
+            document_id
+        ),
     }
 
 
