@@ -1244,4 +1244,4 @@ def hybrid_chat(
         context=result["context"],
         memory_count=result["memory_count"],
         document_count=result["document_count"],
-    )
+    ) 

@@ -2,7 +2,7 @@ from app.database.neo4j_database import neo4j_db
 
 
 class GraphQueryService:
-    """Provides methods for querying the Neo4j knowledge graph."""
+    """Provides methods to query the Neo4j knowledge graph."""
 
     # =====================================================
     # People
@@ -305,7 +305,7 @@ class GraphQueryService:
             ]
 
     # =====================================================
-    # Cross-Document Relationships
+    # F3 — Cross-Document Relationships
     # =====================================================
 
     def get_cross_document_relationships(
@@ -313,32 +313,35 @@ class GraphQueryService:
         entity_name: str,
     ):
         """
-        Find relationships involving an entity that is shared
+        Find relationships for an entity that is shared
         across multiple documents.
 
-        This allows the graph to answer cross-document questions
-        such as:
+        The entity itself is globally shared through a
+        deterministic Entity ID.
 
-            "What is connected to Process across my documents?"
+        A relationship is returned together with the
+        documents in which the subject entity appears.
 
-        The same Entity node may be connected to multiple
-        Document nodes through CONTAINS_ENTITY.
+        The object entity does not have to appear in the
+        target document for the relationship to be valid.
         """
 
         with neo4j_db.get_session() as session:
 
             result = session.run(
                 """
-                MATCH (source_document:Document)
-                      -[:CONTAINS_ENTITY]->
-                      (subject:Entity)
-                      -[r:RELATED]->
-                      (object:Entity)
-                      <-[:CONTAINS_ENTITY]-
-                      (target_document:Document)
+                MATCH (subject:Entity)-[r:RELATED]->(object:Entity)
 
                 WHERE toLower(subject.name) =
                       toLower($entity_name)
+
+                MATCH (source_document:Document)
+                      -[:CONTAINS_ENTITY]->
+                      (subject)
+
+                OPTIONAL MATCH (target_document:Document)
+                      -[:CONTAINS_ENTITY]->
+                      (object)
 
                 RETURN DISTINCT
                        subject.name AS subject,
@@ -346,15 +349,15 @@ class GraphQueryService:
                        r.type AS relationship,
                        object.name AS object,
                        object.type AS object_type,
-                       source_document.name AS source_document,
-                       target_document.name AS target_document
+                       collect(DISTINCT source_document.name)
+                           AS source_documents,
+                       collect(DISTINCT target_document.name)
+                           AS target_documents
 
                 ORDER BY
                     subject,
                     relationship,
-                    object,
-                    source_document,
-                    target_document
+                    object
                 """,
                 entity_name=entity_name,
             )
@@ -366,8 +369,16 @@ class GraphQueryService:
                     "relationship": record["relationship"],
                     "object": record["object"],
                     "object_type": record["object_type"],
-                    "source_document": record["source_document"],
-                    "target_document": record["target_document"],
+                    "source_documents": record[
+                        "source_documents"
+                    ],
+                    "target_documents": [
+                        document
+                        for document in record[
+                            "target_documents"
+                        ]
+                        if document is not None
+                    ],
                 }
                 for record in result
             ]
