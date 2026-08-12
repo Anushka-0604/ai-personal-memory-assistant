@@ -1024,6 +1024,21 @@ def get_locations_for_organization(
     }
 
 
+@router.get("/graph/entity/{entity_name}/connections/depth")
+def get_entity_connections_by_depth(
+    entity_name: str,
+    depth: int = 2,
+):
+    return {
+        "entity": entity_name,
+        "depth": depth,
+        "connections": graph_query_service.get_entity_connections_by_depth(
+            entity_name,
+            depth,
+        ),
+    }
+
+
 @router.get("/graph/location/{location_name}/organizations")
 def get_organizations_for_location(
     location_name: str,

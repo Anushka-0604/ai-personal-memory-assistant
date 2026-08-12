@@ -212,5 +212,47 @@ class GraphQueryService:
                 for record in result
             ]
 
+    # =====================================================
+    # Multi-Hop Graph Traversal
+    # =====================================================
+
+    def get_entity_connections_by_depth(
+        self,
+        entity_name: str,
+        depth: int = 2,
+    ):
+        if depth < 1:
+            depth = 1
+
+        if depth > 5:
+            depth = 5
+
+        with neo4j_db.get_session() as session:
+
+            query = f"""
+                MATCH path =
+                    (start:Entity)-[:RELATED*1..{depth}]->(target:Entity)
+                WHERE start.name = $entity_name
+
+                RETURN DISTINCT
+                    target.name AS entity,
+                    length(path) AS distance
+
+                ORDER BY distance, entity
+            """
+
+            result = session.run(
+                query,
+                entity_name=entity_name,
+            )
+
+            return [
+                {
+                    "entity": record["entity"],
+                    "distance": record["distance"],
+                }
+                for record in result
+            ]
+
 
 graph_query_service = GraphQueryService()
