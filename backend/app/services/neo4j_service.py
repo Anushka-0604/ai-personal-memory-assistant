@@ -160,15 +160,7 @@ class Neo4jService:
                 # -------------------------------------------------
                 # Generate a global deterministic entity ID.
                 #
-                # IMPORTANT:
                 # The document ID is NOT part of this ID.
-                #
-                # Therefore:
-                #
-                # Document 12 -> Process
-                # Document 13 -> Process
-                #
-                # both resolve to the same Entity node.
                 # -------------------------------------------------
 
                 entity_id = self.generate_entity_id(
@@ -250,12 +242,8 @@ class Neo4jService:
                     continue
 
                 # -------------------------------------------------
-                # Find the shared entity nodes through the current
-                # document.
-                #
-                # Because entities are now globally shared,
-                # this can connect entities that also appear in
-                # other documents.
+                # Find the shared subject entity through the
+                # current document.
                 # -------------------------------------------------
 
                 result = session.run(
@@ -277,6 +265,11 @@ class Neo4jService:
                     if result
                     else None
                 )
+
+                # -------------------------------------------------
+                # Find the shared object entity through the
+                # current document.
+                # -------------------------------------------------
 
                 result = session.run(
                     """
@@ -302,8 +295,7 @@ class Neo4jService:
                     continue
 
                 # -------------------------------------------------
-                # Create the relationship between the shared
-                # entity nodes.
+                # Create the relationship between shared entities.
                 # -------------------------------------------------
 
                 session.run(
@@ -319,6 +311,178 @@ class Neo4jService:
                     object_id=object_id,
                     relationship=relationship_type,
                 )
+
+    # =====================================================
+    # Migrate Existing F2 Entity Nodes
+    # =====================================================
+
+    def migrate_existing_entity_nodes(self):
+        """
+        Migrate old document-specific Entity nodes into the
+        new globally shared Entity structure.
+
+        Old format:
+
+            entity_<document_id>_<index>
+
+        New format:
+
+            entity_<deterministic_hash>
+
+        Existing document links and graph relationships are
+        preserved.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            # -------------------------------------------------
+            # Find all existing Entity nodes.
+            # -------------------------------------------------
+
+            result = session.run(
+                """
+                MATCH (e:Entity)
+                RETURN e.id AS old_id,
+                       e.name AS name,
+                       e.type AS type
+                ORDER BY e.id
+                """
+            )
+
+            existing_entities = [
+                {
+                    "old_id": record["old_id"],
+                    "name": record["name"],
+                    "type": record["type"],
+                }
+                for record in result
+            ]
+
+            migrated_count = 0
+
+            for entity in existing_entities:
+
+                old_id = entity["old_id"]
+                entity_name = (
+                    entity["name"] or ""
+                ).strip()
+
+                entity_type = (
+                    entity["type"] or "UNKNOWN"
+                ).strip()
+
+                if not entity_name:
+                    continue
+
+                # -------------------------------------------------
+                # Generate the new shared entity ID.
+                # -------------------------------------------------
+
+                new_id = self.generate_entity_id(
+                    entity_name=entity_name,
+                    entity_type=entity_type,
+                )
+
+                normalized_name = (
+                    self.normalize_entity_name(
+                        entity_name
+                    )
+                )
+
+                # -------------------------------------------------
+                # Create/reuse the global Entity node.
+                # -------------------------------------------------
+
+                session.run(
+                    """
+                    MERGE (new_entity:Entity {id: $new_id})
+
+                    SET new_entity.name = $name,
+                        new_entity.normalized_name = $normalized_name,
+                        new_entity.type = $type
+                    """,
+                    new_id=new_id,
+                    name=entity_name,
+                    normalized_name=normalized_name,
+                    type=entity_type,
+                )
+
+                # -------------------------------------------------
+                # Preserve Document -> Entity relationships.
+                # -------------------------------------------------
+
+                session.run(
+                    """
+                    MATCH (d:Document)-[:CONTAINS_ENTITY]->(old:Entity)
+                    WHERE old.id = $old_id
+
+                    MATCH (new_entity:Entity {id: $new_id})
+
+                    MERGE (d)-[:CONTAINS_ENTITY]->(new_entity)
+                    """,
+                    old_id=old_id,
+                    new_id=new_id,
+                )
+
+                # -------------------------------------------------
+                # Preserve outgoing Entity relationships.
+                # -------------------------------------------------
+
+                session.run(
+                    """
+                    MATCH (old:Entity)-[r:RELATED]->(target:Entity)
+                    WHERE old.id = $old_id
+
+                    MATCH (new_entity:Entity {id: $new_id})
+
+                    MERGE (new_entity)-[new_r:RELATED]->(target)
+
+                    SET new_r.type = r.type
+                    """,
+                    old_id=old_id,
+                    new_id=new_id,
+                )
+
+                # -------------------------------------------------
+                # Preserve incoming Entity relationships.
+                # -------------------------------------------------
+
+                session.run(
+                    """
+                    MATCH (source:Entity)-[r:RELATED]->(old:Entity)
+                    WHERE old.id = $old_id
+
+                    MATCH (new_entity:Entity {id: $new_id})
+
+                    MERGE (source)-[new_r:RELATED]->(new_entity)
+
+                    SET new_r.type = r.type
+                    """,
+                    old_id=old_id,
+                    new_id=new_id,
+                )
+
+                # -------------------------------------------------
+                # Remove the old Entity node.
+                #
+                # DETACH DELETE also removes its old relationships.
+                # The preserved relationships above remain on the
+                # new shared node.
+                # -------------------------------------------------
+
+                if old_id != new_id:
+
+                    session.run(
+                        """
+                        MATCH (old:Entity {id: $old_id})
+                        DETACH DELETE old
+                        """,
+                        old_id=old_id,
+                    )
+
+                    migrated_count += 1
+
+            return migrated_count
 
 
 # =====================================================
