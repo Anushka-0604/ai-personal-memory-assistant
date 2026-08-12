@@ -4,6 +4,10 @@ from app.database.neo4j_database import neo4j_db
 class GraphQueryService:
     """Provides methods for querying the Neo4j knowledge graph."""
 
+    # =====================================================
+    # People
+    # =====================================================
+
     def get_people(self):
         with neo4j_db.get_session() as session:
 
@@ -16,6 +20,10 @@ class GraphQueryService:
             )
 
             return [record["name"] for record in result]
+
+    # =====================================================
+    # Organizations
+    # =====================================================
 
     def get_organizations(self):
         with neo4j_db.get_session() as session:
@@ -30,6 +38,10 @@ class GraphQueryService:
 
             return [record["name"] for record in result]
 
+    # =====================================================
+    # Locations
+    # =====================================================
+
     def get_locations(self):
         with neo4j_db.get_session() as session:
 
@@ -43,7 +55,14 @@ class GraphQueryService:
 
             return [record["name"] for record in result]
 
-    def get_organizations_for_person(self, person_name: str):
+    # =====================================================
+    # Person -> Organization
+    # =====================================================
+
+    def get_organizations_for_person(
+        self,
+        person_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -56,9 +75,19 @@ class GraphQueryService:
                 name=person_name,
             )
 
-            return [record["organization"] for record in result]
+            return [
+                record["organization"]
+                for record in result
+            ]
 
-    def get_people_for_organization(self, organization_name: str):
+    # =====================================================
+    # Organization -> People
+    # =====================================================
+
+    def get_people_for_organization(
+        self,
+        organization_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -71,9 +100,19 @@ class GraphQueryService:
                 name=organization_name,
             )
 
-            return [record["person"] for record in result]
+            return [
+                record["person"]
+                for record in result
+            ]
 
-    def get_locations_for_person(self, person_name: str):
+    # =====================================================
+    # Person -> Location
+    # =====================================================
+
+    def get_locations_for_person(
+        self,
+        person_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -86,9 +125,19 @@ class GraphQueryService:
                 name=person_name,
             )
 
-            return [record["location"] for record in result]
+            return [
+                record["location"]
+                for record in result
+            ]
 
-    def get_people_for_location(self, location_name: str):
+    # =====================================================
+    # Location -> People
+    # =====================================================
+
+    def get_people_for_location(
+        self,
+        location_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -101,9 +150,19 @@ class GraphQueryService:
                 name=location_name,
             )
 
-            return [record["person"] for record in result]
+            return [
+                record["person"]
+                for record in result
+            ]
 
-    def get_locations_for_organization(self, organization_name: str):
+    # =====================================================
+    # Organization -> Locations
+    # =====================================================
+
+    def get_locations_for_organization(
+        self,
+        organization_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -117,9 +176,19 @@ class GraphQueryService:
                 name=organization_name,
             )
 
-            return [record["location"] for record in result]
+            return [
+                record["location"]
+                for record in result
+            ]
 
-    def get_organizations_for_location(self, location_name: str):
+    # =====================================================
+    # Location -> Organizations
+    # =====================================================
+
+    def get_organizations_for_location(
+        self,
+        location_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -133,21 +202,29 @@ class GraphQueryService:
                 name=location_name,
             )
 
-            return [record["organization"] for record in result]
+            return [
+                record["organization"]
+                for record in result
+            ]
 
     # =====================================================
     # Document Graph Queries
     # =====================================================
 
-    def get_document_entities(self, document_id: int):
+    def get_document_entities(
+        self,
+        document_id: int,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
                 """
                 MATCH (d:Document {id: $document_id})
                       -[:CONTAINS_ENTITY]->(e:Entity)
+
                 RETURN e.name AS name,
                        e.type AS type
+
                 ORDER BY name
                 """,
                 document_id=f"document_{document_id}",
@@ -161,7 +238,14 @@ class GraphQueryService:
                 for record in result
             ]
 
-    def get_document_relationships(self, document_id: int):
+    # =====================================================
+    # Document Relationships
+    # =====================================================
+
+    def get_document_relationships(
+        self,
+        document_id: int,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
@@ -169,9 +253,11 @@ class GraphQueryService:
                 MATCH (d:Document {id: $document_id})
                       -[:CONTAINS_ENTITY]->(a:Entity)
                       -[r:RELATED]->(b:Entity)
+
                 RETURN a.name AS subject,
                        r.type AS relationship,
                        b.name AS object
+
                 ORDER BY subject, relationship, object
                 """,
                 document_id=f"document_{document_id}",
@@ -190,15 +276,21 @@ class GraphQueryService:
     # Entity Connection Queries
     # =====================================================
 
-    def get_entity_connections(self, entity_name: str):
+    def get_entity_connections(
+        self,
+        entity_name: str,
+    ):
         with neo4j_db.get_session() as session:
 
             result = session.run(
                 """
                 MATCH (a:Entity)-[r:RELATED]->(b:Entity)
-                WHERE a.name = $entity_name
+
+                WHERE toLower(a.name) = toLower($entity_name)
+
                 RETURN b.name AS entity,
                        r.type AS relationship
+
                 ORDER BY entity
                 """,
                 entity_name=entity_name,
@@ -208,6 +300,74 @@ class GraphQueryService:
                 {
                     "entity": record["entity"],
                     "relationship": record["relationship"],
+                }
+                for record in result
+            ]
+
+    # =====================================================
+    # Cross-Document Relationships
+    # =====================================================
+
+    def get_cross_document_relationships(
+        self,
+        entity_name: str,
+    ):
+        """
+        Find relationships involving an entity that is shared
+        across multiple documents.
+
+        This allows the graph to answer cross-document questions
+        such as:
+
+            "What is connected to Process across my documents?"
+
+        The same Entity node may be connected to multiple
+        Document nodes through CONTAINS_ENTITY.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (source_document:Document)
+                      -[:CONTAINS_ENTITY]->
+                      (subject:Entity)
+                      -[r:RELATED]->
+                      (object:Entity)
+                      <-[:CONTAINS_ENTITY]-
+                      (target_document:Document)
+
+                WHERE toLower(subject.name) =
+                      toLower($entity_name)
+
+                RETURN DISTINCT
+                       subject.name AS subject,
+                       subject.type AS subject_type,
+                       r.type AS relationship,
+                       object.name AS object,
+                       object.type AS object_type,
+                       source_document.name AS source_document,
+                       target_document.name AS target_document
+
+                ORDER BY
+                    subject,
+                    relationship,
+                    object,
+                    source_document,
+                    target_document
+                """,
+                entity_name=entity_name,
+            )
+
+            return [
+                {
+                    "subject": record["subject"],
+                    "subject_type": record["subject_type"],
+                    "relationship": record["relationship"],
+                    "object": record["object"],
+                    "object_type": record["object_type"],
+                    "source_document": record["source_document"],
+                    "target_document": record["target_document"],
                 }
                 for record in result
             ]
@@ -232,7 +392,9 @@ class GraphQueryService:
             query = f"""
                 MATCH path =
                     (start:Entity)-[:RELATED*1..{depth}]->(target:Entity)
-                WHERE start.name = $entity_name
+
+                WHERE toLower(start.name) =
+                      toLower($entity_name)
 
                 RETURN DISTINCT
                     target.name AS entity,
@@ -254,5 +416,9 @@ class GraphQueryService:
                 for record in result
             ]
 
+
+# =====================================================
+# Singleton Service
+# =====================================================
 
 graph_query_service = GraphQueryService()
