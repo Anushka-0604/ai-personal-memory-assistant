@@ -308,14 +308,14 @@ def upload_document(
     file_info = save_file(file)
 
     document = create_document(
-    db=db,
-    user_id=current_user.id,
-    filename=file_info["filename"],
-    original_filename=file_info["original_filename"],
-    file_type=file_info["file_type"],
-    file_size=file_info["file_size"],
-    file_path=file_info["file_path"],
-)
+        db=db,
+        user_id=current_user.id,
+        filename=file_info["filename"],
+        original_filename=file_info["original_filename"],
+        file_type=file_info["file_type"],
+        file_size=file_info["file_size"],
+        file_path=file_info["file_path"],
+    )
 
     # =====================================================
     # Save Document to Neo4j
@@ -385,6 +385,7 @@ def get_single_document(
 
     return document
 
+
 @router.delete(
     "/documents/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -411,7 +412,7 @@ def delete_existing_document(
         document=document,
     )
 
-    
+
 @router.post(
     "/documents/search",
     response_model=list[DocumentSearchResult],
@@ -445,6 +446,7 @@ def search_documents(
         )
 
     return response
+
 
 @router.get("/memories/today")
 def get_today_memories(
@@ -878,6 +880,7 @@ def create_new_chat_message(
         message=message,
     )
 
+
 @router.get(
     "/chat/sessions/{session_id}/messages",
     response_model=list[ChatMessageResponse],
@@ -959,6 +962,7 @@ def get_entity_connections(entity_name: str):
         ),
     }
 
+
 @router.get("/graph/document/{document_id}")
 def get_document_graph(document_id: int):
     return {
@@ -968,6 +972,22 @@ def get_document_graph(document_id: int):
         ),
         "relationships": graph_query_service.get_document_relationships(
             document_id
+        ),
+    }
+
+
+# =====================================================
+# F3 — Cross-Document Relationships
+# =====================================================
+
+@router.get("/graph/entity/{entity_name}/cross-document")
+def get_cross_document_relationships(
+    entity_name: str,
+):
+    return {
+        "entity": entity_name,
+        "relationships": graph_query_service.get_cross_document_relationships(
+            entity_name
         ),
     }
 
@@ -1050,6 +1070,7 @@ def get_organizations_for_location(
         ),
     }
 
+
 @router.get("/evaluation/latest")
 def get_latest_evaluations(
     db: Session = Depends(get_db),
@@ -1062,6 +1083,7 @@ def get_latest_evaluations(
         .limit(20)
         .all()
     )
+
 
 @router.get("/evaluation/latest")
 def get_latest_evaluations(
@@ -1086,6 +1108,7 @@ def get_evaluation_summary(
         user_id=current_user.id,
     )
 
+
 @router.get(
     "/analytics/memory",
     response_model=MemoryAnalyticsResponse,
@@ -1098,6 +1121,8 @@ def get_memory_analytics(
         db=db,
         user_id=current_user.id,
     )
+
+
 @router.get("/analytics/retrieval")
 def get_retrieval_logs(
     limit: int = 20,
@@ -1111,6 +1136,8 @@ def get_retrieval_logs(
         .limit(limit)
         .all()
     )
+
+
 @router.get("/analytics/system-metrics")
 def get_system_metrics(
     limit: int = 50,
@@ -1124,12 +1151,14 @@ def get_system_metrics(
         .all()
     )
 
+
 @router.get("/system/health")
 def system_health(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     return health_service.get_health(db)
+
 
 @router.get(
     "/analytics/retrieval-quality",
@@ -1144,6 +1173,7 @@ def get_retrieval_quality(
         user_id=current_user.id,
     )
 
+
 @router.get(
     "/analytics/usage-dashboard",
     response_model=UsageDashboard,
@@ -1156,6 +1186,7 @@ def get_usage_dashboard(
         db=db,
         user_id=current_user.id,
     )
+
 
 @router.get(
     "/analytics/ai-dashboard",
