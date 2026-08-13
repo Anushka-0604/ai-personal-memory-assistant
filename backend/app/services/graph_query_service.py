@@ -305,84 +305,50 @@ class GraphQueryService:
             ]
 
     # =====================================================
-    # F3 — Cross-Document Relationships
+    # Entity Connection Queries
     # =====================================================
 
-    def get_cross_document_relationships(
+    def get_entity_connections(
         self,
         entity_name: str,
     ):
-        """
-        Find relationships for an entity that is shared
-        across multiple documents.
-
-        The entity itself is globally shared through a
-        deterministic Entity ID.
-
-        A relationship is returned together with the
-        documents in which the subject entity appears.
-
-        The object entity does not have to appear in the
-        target document for the relationship to be valid.
-        """
-
         with neo4j_db.get_session() as session:
 
             result = session.run(
                 """
-                MATCH (subject:Entity)-[r:RELATED]->(object:Entity)
+                MATCH (a:Entity)-[r:RELATED]-(b:Entity)
 
-                WHERE toLower(subject.name) =
-                      toLower($entity_name)
+                WHERE toLower(a.name) = toLower($entity_name)
+                OR toLower(b.name) = toLower($entity_name)
 
-                MATCH (source_document:Document)
-                      -[:CONTAINS_ENTITY]->
-                      (subject)
+                RETURN
+                    CASE
+                        WHEN toLower(a.name) = toLower($entity_name)
+                        THEN b.name
+                        ELSE a.name
+                    END AS entity,
 
-                OPTIONAL MATCH (target_document:Document)
-                      -[:CONTAINS_ENTITY]->
-                      (object)
+                    CASE
+                        WHEN toLower(a.name) = toLower($entity_name)
+                        THEN "OUTGOING"
+                        ELSE "INCOMING"
+                    END AS direction,
 
-                RETURN DISTINCT
-                       subject.name AS subject,
-                       subject.type AS subject_type,
-                       r.type AS relationship,
-                       object.name AS object,
-                       object.type AS object_type,
-                       collect(DISTINCT source_document.name)
-                           AS source_documents,
-                       collect(DISTINCT target_document.name)
-                           AS target_documents
+                    r.type AS relationship
 
-                ORDER BY
-                    subject,
-                    relationship,
-                    object
+                ORDER BY entity
                 """,
                 entity_name=entity_name,
             )
 
             return [
                 {
-                    "subject": record["subject"],
-                    "subject_type": record["subject_type"],
+                    "entity": record["entity"],
+                    "direction": record["direction"],
                     "relationship": record["relationship"],
-                    "object": record["object"],
-                    "object_type": record["object_type"],
-                    "source_documents": record[
-                        "source_documents"
-                    ],
-                    "target_documents": [
-                        document
-                        for document in record[
-                            "target_documents"
-                        ]
-                        if document is not None
-                    ],
                 }
                 for record in result
-            ]
-
+        ]
     # =====================================================
     # Multi-Hop Graph Traversal
     # =====================================================
