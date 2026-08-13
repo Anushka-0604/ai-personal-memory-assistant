@@ -11,12 +11,18 @@ class LLMService:
     """
 
     def __init__(self):
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        self.client = genai.Client(
+            api_key=GEMINI_API_KEY
+        )
 
-    def generate_response(self, prompt: str) -> str:
+    def generate_response(
+        self,
+        prompt: str,
+    ) -> str:
         """
         Sends the prompt to Gemini and returns the generated response.
         """
+
         try:
             response = self.client.models.generate_content(
                 model=GEMINI_MODEL,
@@ -26,17 +32,20 @@ class LLMService:
             return response.text
 
         except APIError as e:
-            logger.error(f"Gemini API Error: {e}")
-
-            return (
-                "I couldn't generate a final AI response because the "
-                "LLM is currently unavailable. However, I found relevant "
-                "memories that may help."
+            logger.error(
+                "Gemini API Error: %s",
+                e,
             )
 
-        except Exception:
-            logger.exception("Unexpected error while calling Gemini")
+            # Re-raise the error during development so that
+            # the actual Gemini failure is visible in the
+            # backend terminal.
+            raise
 
-            return (
-                "An unexpected error occurred while generating the response."
+        except Exception as e:
+            logger.exception(
+                "Unexpected error while calling Gemini: %s",
+                e,
             )
+
+            raise
