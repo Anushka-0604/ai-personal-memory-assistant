@@ -288,52 +288,20 @@ class GraphQueryService:
 
                 WHERE toLower(a.name) = toLower($entity_name)
 
-                RETURN b.name AS entity,
-                       r.type AS relationship
+                RETURN
+                    b.name AS entity,
+                    "OUTGOING" AS direction,
+                    r.type AS relationship
 
-                ORDER BY entity
-                """,
-                entity_name=entity_name,
-            )
+                UNION
 
-            return [
-                {
-                    "entity": record["entity"],
-                    "relationship": record["relationship"],
-                }
-                for record in result
-            ]
+                MATCH (a:Entity)-[r:RELATED]->(b:Entity)
 
-    # =====================================================
-    # Entity Connection Queries
-    # =====================================================
-
-    def get_entity_connections(
-        self,
-        entity_name: str,
-    ):
-        with neo4j_db.get_session() as session:
-
-            result = session.run(
-                """
-                MATCH (a:Entity)-[r:RELATED]-(b:Entity)
-
-                WHERE toLower(a.name) = toLower($entity_name)
-                OR toLower(b.name) = toLower($entity_name)
+                WHERE toLower(b.name) = toLower($entity_name)
 
                 RETURN
-                    CASE
-                        WHEN toLower(a.name) = toLower($entity_name)
-                        THEN b.name
-                        ELSE a.name
-                    END AS entity,
-
-                    CASE
-                        WHEN toLower(a.name) = toLower($entity_name)
-                        THEN "OUTGOING"
-                        ELSE "INCOMING"
-                    END AS direction,
-
+                    a.name AS entity,
+                    "INCOMING" AS direction,
                     r.type AS relationship
 
                 ORDER BY entity
@@ -348,7 +316,68 @@ class GraphQueryService:
                     "relationship": record["relationship"],
                 }
                 for record in result
-        ]
+            ]
+
+    # =====================================================
+    # Cross-Document Relationships
+    # =====================================================
+
+    def get_cross_document_relationships(
+        self,
+        entity_name: str,
+    ):
+        """
+        Find relationships involving an entity that is shared
+        across multiple documents.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (source_document:Document)
+                      -[:CONTAINS_ENTITY]->
+                      (subject:Entity)
+                      -[r:RELATED]->
+                      (object:Entity)
+                      <-[:CONTAINS_ENTITY]-
+                      (target_document:Document)
+
+                WHERE toLower(subject.name) =
+                      toLower($entity_name)
+
+                RETURN DISTINCT
+                       subject.name AS subject,
+                       subject.type AS subject_type,
+                       r.type AS relationship,
+                       object.name AS object,
+                       object.type AS object_type,
+                       source_document.name AS source_document,
+                       target_document.name AS target_document
+
+                ORDER BY
+                    subject,
+                    relationship,
+                    object,
+                    source_document,
+                    target_document
+                """,
+                entity_name=entity_name,
+            )
+
+            return [
+                {
+                    "subject": record["subject"],
+                    "subject_type": record["subject_type"],
+                    "relationship": record["relationship"],
+                    "object": record["object"],
+                    "object_type": record["object_type"],
+                    "source_document": record["source_document"],
+                    "target_document": record["target_document"],
+                }
+                for record in result
+            ]
+
     # =====================================================
     # Multi-Hop Graph Traversal
     # =====================================================
