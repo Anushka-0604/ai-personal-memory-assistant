@@ -27,6 +27,16 @@ def semantic_document_search(
     upload_date: date | None = None,
     group_by_document: bool = False,
 ):
+    """
+    Perform semantic search over document chunks.
+
+    The query is converted into an embedding and compared
+    against stored document chunk embeddings using cosine
+    distance.
+
+    Results are then ranked using the document ranking service.
+    """
+
     query_embedding = generate_embedding(query)
 
     search_query = (
@@ -45,6 +55,10 @@ def semantic_document_search(
         )
     )
 
+    # =====================================================
+    # Optional Filters
+    # =====================================================
+
     if document_id is not None:
         search_query = search_query.filter(
             DocumentChunk.document_id == document_id
@@ -60,6 +74,10 @@ def semantic_document_search(
             Document.created_at >= upload_date
         )
 
+    # =====================================================
+    # Vector Search
+    # =====================================================
+
     rows = (
         search_query
         .order_by(
@@ -73,6 +91,10 @@ def semantic_document_search(
 
     results = []
 
+    # =====================================================
+    # Build Search Results
+    # =====================================================
+
     for chunk, distance in rows:
 
         similarity = max(
@@ -85,17 +107,24 @@ def semantic_document_search(
                 document_id=chunk.document_id,
                 document_name=chunk.document.original_filename,
                 chunk_index=chunk.chunk_index,
-                page_number=chunk.page_number,
                 content=chunk.content,
                 similarity=similarity,
             )
         )
+
+    # =====================================================
+    # Rank Results
+    # =====================================================
 
     ranked_results = (
         document_ranking_service.rank(
             results
         )
     )
+
+    # =====================================================
+    # Optional Grouping
+    # =====================================================
 
     if group_by_document:
         return (
