@@ -17,9 +17,10 @@ class HybridContextService:
 
         sections = []
 
-        # -----------------------------
+        # =====================================================
         # Memory Section
-        # -----------------------------
+        # =====================================================
+
         sections.append(
             "========== MEMORIES =========="
         )
@@ -32,15 +33,17 @@ class HybridContextService:
                 )
 
         else:
+
             sections.append(
                 "No relevant memories."
             )
 
         sections.append("")
 
-        # -----------------------------
+        # =====================================================
         # Document Section
-        # -----------------------------
+        # =====================================================
+
         sections.append(
             "========== DOCUMENTS =========="
         )
@@ -52,12 +55,6 @@ class HybridContextService:
                 sections.append(
                     f"[Document: {document.document_name}]"
                 )
-
-                if document.page_number is not None:
-
-                    sections.append(
-                        f"[Page: {document.page_number}]"
-                    )
 
                 sections.append(
                     document.content
@@ -75,6 +72,10 @@ class HybridContextService:
             sections
         )
 
+
+# =====================================================
+# Singleton Service
+# =====================================================
 
 hybrid_context_service = (
     HybridContextService()

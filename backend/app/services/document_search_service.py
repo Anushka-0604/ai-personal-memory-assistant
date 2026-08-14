@@ -101,10 +101,11 @@ def semantic_document_search(
 
     for chunk, distance in rows:
 
-        # Use document ID + chunk content as the
-        # duplicate detection key.
+        # Use document filename + chunk content so that
+        # identical chunks from duplicate document records
+        # are treated as duplicates.
         duplicate_key = (
-            chunk.document_id,
+            chunk.document.original_filename,
             chunk.content.strip(),
         )
 
