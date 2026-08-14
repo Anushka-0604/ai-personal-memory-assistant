@@ -18,6 +18,9 @@ from app.services.document_search_service import (
 from app.services.graph_query_service import (
     graph_query_service,
 )
+from app.services.entity_extractor import (
+    EntityExtractor,
+)
 
 
 class HybridChatService:
@@ -34,6 +37,7 @@ class HybridChatService:
 
     def __init__(self):
         self.llm_service = LLMService()
+        self.entity_extractor = EntityExtractor()
 
     def chat(
         self,
@@ -70,20 +74,75 @@ class HybridChatService:
         )
 
         # -----------------------------------------
+        # Extract entities from question
+        # -----------------------------------------
+
+        extraction = self.entity_extractor.extract(
+            question
+        )
+
+        entities = []
+
+        entities.extend(
+            extraction.people
+        )
+
+        entities.extend(
+            extraction.organizations
+        )
+
+        entities.extend(
+            extraction.locations
+        )
+
+        entities.extend(
+            extraction.events
+        )
+
+        # Remove duplicate entity names
+        entities = list(
+            dict.fromkeys(entities)
+        )
+
+        # -----------------------------------------
         # Retrieve Knowledge Graph connections
         # -----------------------------------------
 
         graph_context = []
 
-        try:
-            graph_context = (
-                graph_query_service.get_entity_connections(
-                    question
-                )
-            )
+        for entity_name in entities:
 
-        except Exception:
-            graph_context = []
+            try:
+
+                connections = (
+                    graph_query_service
+                    .get_entity_connections(
+                        entity_name
+                    )
+                )
+
+                for connection in connections:
+
+                    graph_item = {
+                        "entity": entity_name,
+                        "related_entity": connection[
+                            "entity"
+                        ],
+                        "direction": connection[
+                            "direction"
+                        ],
+                        "relationship": connection[
+                            "relationship"
+                        ],
+                    }
+
+                    if graph_item not in graph_context:
+                        graph_context.append(
+                            graph_item
+                        )
+
+            except Exception:
+                continue
 
         # -----------------------------------------
         # Build unified context
