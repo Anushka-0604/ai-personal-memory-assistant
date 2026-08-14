@@ -6,12 +6,14 @@ class RelationshipExtractionService:
     Extracts high-confidence relationships between named entities.
     """
 
-    # Only use reliable entity types for relationship extraction.
     ALLOWED_ENTITY_LABELS = {
         "PERSON",
         "ORG",
         "GPE",
         "LOC",
+        "EVENT",
+        "PRODUCT",
+        "WORK_OF_ART",
     }
 
     RELATION_PATTERNS = {
@@ -88,9 +90,7 @@ class RelationshipExtractionService:
         ],
     }
 
-    # Maximum number of characters allowed between
-    # an entity and a relationship phrase.
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 150
 
     def extract_relationships(
         self,
@@ -109,6 +109,41 @@ class RelationshipExtractionService:
             text,
         ).strip()
 
+        # -------------------------------------------------
+        # Normalize entity information
+        # -------------------------------------------------
+
+        valid_entities = []
+
+        for entity in entities:
+
+            entity_text = entity.get(
+                "text",
+                "",
+            ).strip()
+
+            entity_label = entity.get(
+                "label",
+                "",
+            ).strip()
+
+            if not entity_text:
+                continue
+
+            if entity_label not in self.ALLOWED_ENTITY_LABELS:
+                continue
+
+            valid_entities.append(
+                (
+                    entity_text,
+                    entity_label,
+                )
+            )
+
+        # -------------------------------------------------
+        # Search sentence-by-sentence
+        # -------------------------------------------------
+
         sentences = re.split(
             r"(?<=[.!?])\s+",
             normalized_text,
@@ -120,34 +155,36 @@ class RelationshipExtractionService:
 
             sentence_entities = []
 
-            for entity in entities:
+            # ---------------------------------------------
+            # Find entities inside sentence
+            # ---------------------------------------------
 
-                entity_text = entity.get(
-                    "text",
-                    "",
-                ).strip()
+            for entity_text, entity_label in valid_entities:
 
-                entity_label = entity.get("label")
+                start = 0
 
-                # Ignore unreliable entity types.
-                if entity_label not in self.ALLOWED_ENTITY_LABELS:
-                    continue
+                while True:
 
-                if not entity_text:
-                    continue
+                    position = sentence_lower.find(
+                        entity_text.lower(),
+                        start,
+                    )
 
-                position = sentence_lower.find(
-                    entity_text.lower()
-                )
-
-                if position != -1:
+                    if position == -1:
+                        break
 
                     sentence_entities.append(
                         (
                             position,
                             position + len(entity_text),
                             entity_text,
+                            entity_label,
                         )
+                    )
+
+                    start = (
+                        position
+                        + len(entity_text)
                     )
 
             if len(sentence_entities) < 2:
@@ -156,6 +193,10 @@ class RelationshipExtractionService:
             sentence_entities.sort(
                 key=lambda item: item[0]
             )
+
+            # ---------------------------------------------
+            # Find relationship patterns
+            # ---------------------------------------------
 
             for relationship_name, patterns in (
                 self.RELATION_PATTERNS.items()
@@ -184,7 +225,6 @@ class RelationshipExtractionService:
                         if not subject or not object_entity:
                             continue
 
-                        # Find the actual entity positions.
                         subject_position = next(
                             (
                                 entity
@@ -205,11 +245,12 @@ class RelationshipExtractionService:
                             None,
                         )
 
-                        if not subject_position or not object_position:
+                        if (
+                            not subject_position
+                            or not object_position
+                        ):
                             continue
 
-                        # Reject relationships where entities
-                        # are too far away from the relation.
                         subject_distance = (
                             relation_start
                             - subject_position[1]
@@ -245,6 +286,10 @@ class RelationshipExtractionService:
 
         return relationships
 
+    # =====================================================
+    # Find Subject
+    # =====================================================
+
     def _find_subject(
         self,
         entities: list[tuple],
@@ -264,6 +309,10 @@ class RelationshipExtractionService:
             candidates,
             key=lambda item: item[1],
         )[2]
+
+    # =====================================================
+    # Find Object
+    # =====================================================
 
     def _find_object(
         self,
@@ -285,6 +334,10 @@ class RelationshipExtractionService:
             key=lambda item: item[0],
         )[2]
 
+
+# =====================================================
+# Singleton Service
+# =====================================================
 
 relationship_extraction_service = (
     RelationshipExtractionService()
