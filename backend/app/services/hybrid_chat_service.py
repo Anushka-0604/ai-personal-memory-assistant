@@ -1,8 +1,5 @@
 from sqlalchemy.orm import Session
 
-from app.services.embedding_service import (
-    generate_embedding,
-)
 from app.services.hybrid_context_service import (
     hybrid_context_service,
 )
@@ -18,17 +15,21 @@ from app.services.memory_service import (
 from app.services.document_search_service import (
     semantic_document_search,
 )
+from app.services.graph_query_service import (
+    graph_query_service,
+)
 
 
 class HybridChatService:
     """
     Hybrid Retrieval-Augmented Generation.
 
-    Searches both:
+    Searches:
     - Personal memories
     - Uploaded documents
+    - Knowledge graph
 
-    and combines them into one response.
+    and combines them into one unified response.
     """
 
     def __init__(self):
@@ -69,6 +70,22 @@ class HybridChatService:
         )
 
         # -----------------------------------------
+        # Retrieve Knowledge Graph connections
+        # -----------------------------------------
+
+        graph_context = []
+
+        try:
+            graph_context = (
+                graph_query_service.get_entity_connections(
+                    question
+                )
+            )
+
+        except Exception:
+            graph_context = []
+
+        # -----------------------------------------
         # Build unified context
         # -----------------------------------------
 
@@ -76,6 +93,7 @@ class HybridChatService:
             hybrid_context_service.build_context(
                 memories=memory_texts,
                 documents=documents,
+                graph_context=graph_context,
             )
         )
 
@@ -105,8 +123,13 @@ class HybridChatService:
             "context": context,
             "memory_count": len(memories),
             "document_count": len(documents),
+            "graph_count": len(graph_context),
         }
 
+
+# =====================================================
+# Singleton Service
+# =====================================================
 
 hybrid_chat_service = (
     HybridChatService()
