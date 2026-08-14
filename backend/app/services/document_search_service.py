@@ -34,7 +34,9 @@ def semantic_document_search(
     against stored document chunk embeddings using cosine
     distance.
 
-    Results are then ranked using the document ranking service.
+    Duplicate chunks are removed before ranking so that
+    repeated document content does not occupy multiple
+    retrieval slots.
     """
 
     query_embedding = generate_embedding(query)
@@ -85,17 +87,31 @@ def semantic_document_search(
                 query_embedding
             )
         )
-        .limit(top_k)
+        .limit(top_k * 3)
         .all()
     )
 
     results = []
 
     # =====================================================
-    # Build Search Results
+    # Remove Duplicate Chunks
     # =====================================================
 
+    seen_chunks = set()
+
     for chunk, distance in rows:
+
+        # Use document ID + chunk content as the
+        # duplicate detection key.
+        duplicate_key = (
+            chunk.document_id,
+            chunk.content.strip(),
+        )
+
+        if duplicate_key in seen_chunks:
+            continue
+
+        seen_chunks.add(duplicate_key)
 
         similarity = max(
             0.0,
@@ -111,6 +127,10 @@ def semantic_document_search(
                 similarity=similarity,
             )
         )
+
+        # Keep the requested number of unique results.
+        if len(results) >= top_k:
+            break
 
     # =====================================================
     # Rank Results
