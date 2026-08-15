@@ -73,4 +73,4 @@ class RetrievalQualityService:
         }
 
 
-retrieval_quality_service = RetrievalQualityService()
+retrieval_quality_service = RetrievalQualityServiceeee()
