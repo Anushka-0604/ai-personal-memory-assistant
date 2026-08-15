@@ -25,6 +25,6 @@ class MultiDocumentRetrievalService:
         return dict(grouped)
 
 
-multi_documeent_retrieval_service = (
+multi_document_retrieval_service = (
     MultiDocumentRetrievalService()
 )
