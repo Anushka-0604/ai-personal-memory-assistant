@@ -201,7 +201,7 @@ class RelationshipExtractionService:
             r"\s+",
             " ",
             text,
-        ).stripper()
+        ).strip()
 
         valid_entities = []
 
