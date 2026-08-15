@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.models.memmory import Memory
+from app.models.memory import Memory
 
 
 class TimelineService:
