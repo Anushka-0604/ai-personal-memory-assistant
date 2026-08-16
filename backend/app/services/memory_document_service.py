@@ -10,6 +10,52 @@ class MemoryDocumentService:
     """
 
     # =====================================================
+    # Get Memory And Document For User
+    # =====================================================
+
+    def _get_memory_and_document(
+        self,
+        db: Session,
+        memory_id: int,
+        document_id: int,
+        user_id: int,
+    ):
+        """
+        Retrieve a memory and document only when both belong
+        to the current user.
+        """
+
+        memory = (
+            db.query(Memory)
+            .filter(
+                Memory.id == memory_id,
+                Memory.user_id == user_id,
+            )
+            .first()
+        )
+
+        if memory is None:
+            raise ValueError(
+                "Memory not found."
+            )
+
+        document = (
+            db.query(Document)
+            .filter(
+                Document.id == document_id,
+                Document.user_id == user_id,
+            )
+            .first()
+        )
+
+        if document is None:
+            raise ValueError(
+                "Document not found."
+            )
+
+        return memory, document
+
+    # =====================================================
     # Link Memory -> Document
     # =====================================================
 
@@ -18,35 +64,20 @@ class MemoryDocumentService:
         db: Session,
         memory_id: int,
         document_id: int,
+        user_id: int,
     ) -> bool:
         """
-        Link an existing memory to an existing document.
-
-        Returns True if the relationship exists after the
-        operation.
+        Link a user's memory to one of their documents.
         """
 
-        memory = (
-            db.query(Memory)
-            .filter(Memory.id == memory_id)
-            .first()
-        )
-
-        document = (
-            db.query(Document)
-            .filter(Document.id == document_id)
-            .first()
-        )
-
-        if memory is None:
-            raise ValueError(
-                f"Memory {memory_id} not found."
+        memory, document = (
+            self._get_memory_and_document(
+                db=db,
+                memory_id=memory_id,
+                document_id=document_id,
+                user_id=user_id,
             )
-
-        if document is None:
-            raise ValueError(
-                f"Document {document_id} not found."
-            )
+        )
 
         if document not in memory.documents:
             memory.documents.append(document)
@@ -65,33 +96,21 @@ class MemoryDocumentService:
         db: Session,
         memory_id: int,
         document_id: int,
+        user_id: int,
     ) -> bool:
         """
-        Remove the relationship between a memory and
-        a document.
+        Remove the relationship between a user's memory
+        and document.
         """
 
-        memory = (
-            db.query(Memory)
-            .filter(Memory.id == memory_id)
-            .first()
-        )
-
-        document = (
-            db.query(Document)
-            .filter(Document.id == document_id)
-            .first()
-        )
-
-        if memory is None:
-            raise ValueError(
-                f"Memory {memory_id} not found."
+        memory, document = (
+            self._get_memory_and_document(
+                db=db,
+                memory_id=memory_id,
+                document_id=document_id,
+                user_id=user_id,
             )
-
-        if document is None:
-            raise ValueError(
-                f"Document {document_id} not found."
-            )
+        )
 
         if document in memory.documents:
             memory.documents.remove(document)
@@ -109,20 +128,25 @@ class MemoryDocumentService:
         self,
         db: Session,
         memory_id: int,
+        user_id: int,
     ) -> list[Document]:
         """
-        Return all documents linked to a memory.
+        Return documents linked to a memory belonging
+        to the current user.
         """
 
         memory = (
             db.query(Memory)
-            .filter(Memory.id == memory_id)
+            .filter(
+                Memory.id == memory_id,
+                Memory.user_id == user_id,
+            )
             .first()
         )
 
         if memory is None:
             raise ValueError(
-                f"Memory {memory_id} not found."
+                "Memory not found."
             )
 
         return memory.documents
@@ -135,20 +159,25 @@ class MemoryDocumentService:
         self,
         db: Session,
         document_id: int,
+        user_id: int,
     ) -> list[Memory]:
         """
-        Return all memories linked to a document.
+        Return memories linked to a document belonging
+        to the current user.
         """
 
         document = (
             db.query(Document)
-            .filter(Document.id == document_id)
+            .filter(
+                Document.id == document_id,
+                Document.user_id == user_id,
+            )
             .first()
         )
 
         if document is None:
             raise ValueError(
-                f"Document {document_id} not found."
+                "Document not found."
             )
 
         return document.memories
