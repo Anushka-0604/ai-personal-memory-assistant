@@ -1272,6 +1272,7 @@ def link_document_to_memory(
             db=db,
             memory_id=memory_id,
             document_id=document_id,
+            user_id=current_user.id,
         )
 
     except ValueError as exc:
@@ -1282,39 +1283,6 @@ def link_document_to_memory(
 
     return {
         "message": "Document linked to memory successfully.",
-        "memory_id": memory_id,
-        "document_id": document_id,
-    }
-
-
-@router.delete(
-    "/documents/{document_id}/memories/{memory_id}",
-)
-def unlink_document_from_memory(
-    document_id: int,
-    memory_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Remove the relationship between a document and a memory.
-    """
-
-    try:
-        memory_document_service.unlink_memory_from_document(
-            db=db,
-            memory_id=memory_id,
-            document_id=document_id,
-        )
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        )
-
-    return {
-        "message": "Document unlinked from memory successfully.",
         "memory_id": memory_id,
         "document_id": document_id,
     }
@@ -1337,6 +1305,7 @@ def get_document_memories(
             memory_document_service.get_memories_for_document(
                 db=db,
                 document_id=document_id,
+                user_id=current_user.id,
             )
         )
 
@@ -1374,6 +1343,7 @@ def get_memory_documents(
             memory_document_service.get_documents_for_memory(
                 db=db,
                 memory_id=memory_id,
+                user_id=current_user.id,
             )
         )
 
