@@ -8,3 +8,4 @@ from .ai_request_log import AIRequestLog
 
 from .document import Document
 from .document_chunk import DocumentChunk
+from .memory_document import MemoryDocument
