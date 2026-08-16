@@ -107,3 +107,10 @@ class Document(Base):
         back_populates="document",
         cascade="all, delete-orphan",
     )
+
+    # Memories related to this document
+    memories: Mapped[list["Memory"]] = relationship(
+        "Memory",
+        secondary="memory_documents",
+        back_populates="documents",
+    )
