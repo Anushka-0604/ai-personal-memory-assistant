@@ -1248,3 +1248,148 @@ def hybrid_chat(
         memory_count=result["memory_count"],
         document_count=result["document_count"],
     ) 
+
+
+# =====================================================
+# Memory <-> Document Links
+# =====================================================
+
+@router.post(
+    "/documents/{document_id}/memories/{memory_id}",
+)
+def link_document_to_memory(
+    document_id: int,
+    memory_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Link a document to a memory.
+    """
+
+    try:
+        memory_document_service.link_memory_to_document(
+            db=db,
+            memory_id=memory_id,
+            document_id=document_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    return {
+        "message": "Document linked to memory successfully.",
+        "memory_id": memory_id,
+        "document_id": document_id,
+    }
+
+
+@router.delete(
+    "/documents/{document_id}/memories/{memory_id}",
+)
+def unlink_document_from_memory(
+    document_id: int,
+    memory_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Remove the relationship between a document and a memory.
+    """
+
+    try:
+        memory_document_service.unlink_memory_from_document(
+            db=db,
+            memory_id=memory_id,
+            document_id=document_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    return {
+        "message": "Document unlinked from memory successfully.",
+        "memory_id": memory_id,
+        "document_id": document_id,
+    }
+
+
+@router.get(
+    "/documents/{document_id}/memories",
+)
+def get_document_memories(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all memories linked to a document.
+    """
+
+    try:
+        memories = (
+            memory_document_service.get_memories_for_document(
+                db=db,
+                document_id=document_id,
+            )
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    return [
+        {
+            "id": memory.id,
+            "content": memory.content,
+            "source": memory.source,
+            "created_at": memory.created_at,
+        }
+        for memory in memories
+    ]
+
+
+@router.get(
+    "/memories/{memory_id}/documents",
+)
+def get_memory_documents(
+    memory_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all documents linked to a memory.
+    """
+
+    try:
+        documents = (
+            memory_document_service.get_documents_for_memory(
+                db=db,
+                memory_id=memory_id,
+            )
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    return [
+        {
+            "id": document.id,
+            "original_filename": document.original_filename,
+            "document_category": document.document_category,
+            "file_type": document.file_type,
+            "created_at": document.created_at,
+        }
+        for document in documents
+    ]
