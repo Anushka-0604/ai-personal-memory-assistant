@@ -149,3 +149,10 @@ class Memory(Base):
         default=False,
         nullable=False,
     )
+
+    # Documents related to this memory
+    documents: Mapped[list["Document"]] = relationship(
+        "Document",
+        secondary="memory_documents",
+        back_populates="memories",
+    )
