@@ -7,6 +7,9 @@ from fastapi import (
     UploadFile,
     status,
 )
+from ..services.memory_document_service import (
+    memory_document_service,
+)
 from app.services.graph_query_service import graph_query_service
 from ..services.neo4j_service import neo4j_service
 from ..services.hybrid_chat_service import (
