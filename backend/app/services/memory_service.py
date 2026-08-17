@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
 from app.services.cache_service import cache_service
 from app.models.memory import Memory
 from app.schemas.memory import MemoryCreate, MemoryUpdate
@@ -49,6 +50,7 @@ from app.services.temporal_service import (
     temporal_service,
 )
 
+
 # =====================================================
 # Initialize Services
 # =====================================================
@@ -56,6 +58,7 @@ from app.services.temporal_service import (
 extraction_service = ExtractionService()
 
 graph_builder = GraphBuilder()
+
 
 # =====================================================
 # Create Memory
@@ -160,7 +163,25 @@ def create_memory(
 
     db.refresh(new_memory)
 
+    # =====================================================
+    # F4 — Save Memory to Unified Neo4j Graph
+    # =====================================================
+
+    try:
+        neo4j_service.create_memory_node(
+            memory_id=new_memory.id,
+            user_id=user_id,
+            content=new_memory.content,
+            source=new_memory.source,
+        )
+
+    except Exception as e:
+        print(
+            f"[WARNING] Failed to save memory to Neo4j: {e}"
+        )
+
     return new_memory
+
 
 # =====================================================
 # Get All Memories
@@ -177,6 +198,7 @@ def get_memories(
         )
         .all()
     )
+
 
 # =====================================================
 # Get Memory By ID
@@ -206,6 +228,7 @@ def get_memory_by_id(
         db.refresh(memory)
 
     return memory
+
 
 # =====================================================
 # Update Memory
@@ -361,6 +384,7 @@ def keyword_search(
         .all()
     )
 
+
 # =====================================================
 # Hybrid Search
 # =====================================================
@@ -385,6 +409,7 @@ def hybrid_search(
 
     if cached_results is not None:
         return cached_results
+
     # ------------------------------------------
     # Build Context-Aware Query (Module 9.10)
     # ------------------------------------------
@@ -535,7 +560,7 @@ def hybrid_search(
 
         return results
 
-        # ------------------------------------------
+    # ------------------------------------------
     # Prepare Memory Texts
     # ------------------------------------------
 
