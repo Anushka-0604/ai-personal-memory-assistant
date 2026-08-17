@@ -104,6 +104,118 @@ class Neo4jService:
                 )
 
     # =====================================================
+    # F4 — Create User Node
+    # =====================================================
+
+    def create_user_node(
+        self,
+        user_id: int,
+        name: str | None = None,
+        email: str | None = None,
+    ):
+        """
+        Create or reuse a User node.
+
+        User nodes are shared across all memories and
+        documents belonging to that user.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            session.run(
+                """
+                MERGE (u:User {id: $id})
+
+                SET u.name = $name,
+                    u.email = $email
+                """,
+                id=f"user_{user_id}",
+                name=name,
+                email=email,
+            )
+
+    # =====================================================
+    # F4 — Create Memory Node
+    # =====================================================
+
+    def create_memory_node(
+        self,
+        memory_id: int,
+        user_id: int,
+        content: str,
+        source: str | None = None,
+    ):
+        """
+        Create or update a Memory node and connect it
+        to its owning User.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            # ---------------------------------------------
+            # Create / update Memory node
+            # ---------------------------------------------
+
+            session.run(
+                """
+                MERGE (m:Memory {id: $memory_id})
+
+                SET m.user_id = $user_id,
+                    m.content = $content,
+                    m.source = $source
+                """,
+                memory_id=f"memory_{memory_id}",
+                user_id=user_id,
+                content=content,
+                source=source,
+            )
+
+            # ---------------------------------------------
+            # Connect User -> Memory
+            # ---------------------------------------------
+
+            session.run(
+                """
+                MERGE (u:User {id: $user_id})
+
+                WITH u
+
+                MATCH (m:Memory {id: $memory_id})
+
+                MERGE (u)-[:HAS_MEMORY]->(m)
+                """,
+                user_id=f"user_{user_id}",
+                memory_id=f"memory_{memory_id}",
+            )
+
+    # =====================================================
+    # F4 — Link Memory -> Document
+    # =====================================================
+
+    def link_memory_to_document(
+        self,
+        memory_id: int,
+        document_id: int,
+    ):
+        """
+        Create the Memory -> Document relationship
+        inside the unified knowledge graph.
+        """
+
+        with neo4j_db.get_session() as session:
+
+            session.run(
+                """
+                MATCH (m:Memory {id: $memory_id})
+                MATCH (d:Document {id: $document_id})
+
+                MERGE (m)-[:REFERENCES_DOCUMENT]->(d)
+                """,
+                memory_id=f"memory_{memory_id}",
+                document_id=f"document_{document_id}",
+            )
+
+    # =====================================================
     # Create Document Node
     # =====================================================
 
@@ -464,10 +576,6 @@ class Neo4jService:
 
                 # -------------------------------------------------
                 # Remove the old Entity node.
-                #
-                # DETACH DELETE also removes its old relationships.
-                # The preserved relationships above remain on the
-                # new shared node.
                 # -------------------------------------------------
 
                 if old_id != new_id:
