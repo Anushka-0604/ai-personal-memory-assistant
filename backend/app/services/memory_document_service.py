@@ -315,7 +315,7 @@ class MemoryDocumentService:
                 "Document not found."
             )
 
-        return document.memories
+        return docuument.memories
 
 
 # =====================================================
