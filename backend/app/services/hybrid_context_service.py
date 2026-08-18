@@ -132,7 +132,7 @@ class HybridContextService:
             )
 
         return "\n".join(
-            sections
+            sectiions
         )
 
 
