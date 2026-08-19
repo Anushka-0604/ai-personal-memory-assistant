@@ -103,10 +103,12 @@ class MemoryDocumentService:
                 MERGE (m:Memory {id: $memory_id})
 
                 SET m.memory_id = $memory_id,
+                    m.user_id = $user_id,
                     m.content = $content,
                     m.source = $source
                 """,
                 memory_id=f"memory_{memory.id}",
+                user_id=f"user_{memory.user_id}",
                 content=memory.content,
                 source=memory.source,
             )
