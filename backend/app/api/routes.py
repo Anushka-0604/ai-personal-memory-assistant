@@ -979,6 +979,18 @@ def get_document_graph(document_id: int):
     }
 
 
+@router.get("/graph/memory/{memory_id}/documents")
+def get_graph_documents_for_memory(
+    memory_id: int,
+):
+    return {
+        "memory_id": memory_id,
+        "documents": graph_query_service.get_documents_for_memory(
+            memory_id
+        ),
+    }
+
+
 # =====================================================
 # F3 — Cross-Document Relationships
 # =====================================================
