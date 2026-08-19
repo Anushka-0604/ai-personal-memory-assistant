@@ -422,9 +422,53 @@ class GraphQueryService:
                 for record in result
             ]
 
+    # =====================================================
+    # F5 — Documents For Memory
+    # =====================================================
+
+    def get_documents_for_memory(
+        self,
+        memory_id: int,
+    ):
+        """
+        Retrieve documents connected to a memory through
+        the Neo4j knowledge graph.
+
+        Graph path:
+
+            Memory -> REFERENCES_DOCUMENT -> Document
+        """
+
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (m:Memory {id: $memory_id})
+                      -[:REFERENCES_DOCUMENT]->
+                      (d:Document)
+
+                RETURN
+                    d.id AS document_id,
+                    d.name AS document_name,
+                    d.category AS category
+
+                ORDER BY document_name
+                """,
+                memory_id=f"memory_{memory_id}",
+            )
+
+            return [
+                {
+                    "document_id": record["document_id"],
+                    "document_name": record["document_name"],
+                    "category": record["category"],
+                }
+                for record in result
+            ]
+
 
 # =====================================================
-# Singleton Service
+# Singleton
 # =====================================================
 
 graph_query_service = GraphQueryService()
