@@ -1429,3 +1429,17 @@ def get_document_usage(
         db=db,
         user_id=current_user.id,
     )
+
+
+@router.get(
+    "/analytics/retrieval-analytics",
+    response_model=RetrievalAnalyticsResponse,
+)
+def get_retrieval_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return retrieval_analytics_service.get_statistics(
+        db=db,
+        user_id=current_user.id,
+    )
