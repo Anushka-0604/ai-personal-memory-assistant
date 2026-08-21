@@ -8,6 +8,10 @@ from fastapi import (
     status,
 )
 
+from ..schemas.retrieval_analytics import (
+    RetrievalAnalyticsResponse,
+)
+
 from ..schemas.document_usage import (
     DocumentUsageStatistics,
 )
