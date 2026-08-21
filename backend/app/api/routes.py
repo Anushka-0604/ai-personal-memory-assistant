@@ -1074,6 +1074,18 @@ def get_entity_connections_by_depth(
     }
 
 
+@router.get("/graph/entity/{entity_name}/documents")
+def get_documents_for_entity(
+    entity_name: str,
+):
+    return {
+        "entity": entity_name,
+        "documents": graph_query_service.get_documents_for_entity(
+            entity_name
+        ),
+    }
+
+
 @router.get("/graph/location/{location_name}/organizations")
 def get_organizations_for_location(
     location_name: str,
