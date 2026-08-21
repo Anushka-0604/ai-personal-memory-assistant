@@ -8,6 +8,10 @@ from fastapi import (
     status,
 )
 
+from ..schemas.document_usage import (
+    DocumentUsageStatistics,
+)
+
 from ..services.document_dashboard_service import (
     document_dashboard_service,
 )
