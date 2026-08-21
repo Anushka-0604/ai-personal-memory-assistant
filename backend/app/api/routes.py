@@ -7,6 +7,10 @@ from fastapi import (
     UploadFile,
     status,
 )
+
+from ..services.document_dashboard_service import (
+    document_dashboard_service,
+)
 from ..schemas.document_dashboard import (
     DocumentDashboard,
 )
