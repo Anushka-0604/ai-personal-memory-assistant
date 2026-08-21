@@ -14,6 +14,7 @@ from app.models.chat_message import ChatMessage
 from app.models.ai_request_log import AIRequestLog
 from app.models.system_metric import SystemMetric
 from app.models.user_interaction import UserInteraction
+from app.models.retrieval_log import RetrievalLog
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -37,7 +38,7 @@ from app.models.user import User
 
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
+# other values, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
@@ -70,7 +71,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine
+    In this scenario we create an Engine
     and associate a connection with the context.
 
     """
@@ -82,7 +83,8 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():
