@@ -1412,3 +1412,16 @@ def get_document_dashboard(
         db=db,
         user_id=current_user.id,
     )
+
+@router.get(
+    "/analytics/document-usage",
+    response_model=DocumentUsageStatistics,
+)
+def get_document_usage(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return document_dashboard_service.get_dashboard(
+        db=db,
+        user_id=current_user.id,
+    )
