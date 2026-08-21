@@ -140,7 +140,7 @@ class ChatService:
         )
 
         # -------------------------------------------------------------
-        # Step 8: Retrieve memories
+        # Step 8: Retrieve memories and documents
         # -------------------------------------------------------------
         retrieval_start = time.perf_counter()
 
@@ -271,29 +271,28 @@ class ChatService:
                 "retrieved_memories": [],
                 "retrieved_documents": [
                     {
-                        "document_id": chunk.document_id,
-                        "chunk_index": chunk.chunk_index,
-                        "content": chunk.content,
-                        "similarity": round(
-                            max(0.0, 1 - distance),
-                            4,
-                        ),
+                        "document_id": result.document_id,
+                        "chunk_index": result.chunk_index,
+                        "content": result.content,
+                        "similarity": result.similarity,
                     }
-                    for chunk, distance in document_chunks
+                    for result in document_chunks
                 ],
             }
 
         # -------------------------------------------------------------
-        # Step 10: Extract memory text
+        # Step 10: Extract memory and document text
         # -------------------------------------------------------------
         memory_texts = [
             memory["content"]
             for memory in selected_memories
         ]
+
         document_texts = [
-            chunk.content
-            for chunk, _ in document_chunks
+            result.content
+            for result in document_chunks
         ]
+
         # -------------------------------------------------------------
         # Step 11: Build unified context
         # -------------------------------------------------------------
@@ -488,18 +487,15 @@ class ChatService:
         )
 
         return {
-        "answer": answer,
-        "retrieved_memories": selected_memories,
-        "retrieved_documents": [
-            {
-                "document_id": chunk.document_id,
-                "chunk_index": chunk.chunk_index,
-                "content": chunk.content,
-                "similarity": round(
-                    max(0.0, 1 - distance),
-                    4,
-                ),
-            }
-            for chunk, distance in document_chunks
-        ],
-    }
+            "answer": answer,
+            "retrieved_memories": selected_memories,
+            "retrieved_documents": [
+                {
+                    "document_id": result.document_id,
+                    "chunk_index": result.chunk_index,
+                    "content": result.content,
+                    "similarity": result.similarity,
+                }
+                for result in document_chunks
+            ],
+        }
