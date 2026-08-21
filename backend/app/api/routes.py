@@ -7,6 +7,9 @@ from fastapi import (
     UploadFile,
     status,
 )
+from ..schemas.document_dashboard import (
+    DocumentDashboard,
+)
 from ..services.memory_document_service import (
     memory_document_service,
 )
@@ -1387,3 +1390,17 @@ def get_memory_documents(
         }
         for document in documents
     ]
+
+
+@router.get(
+    "/analytics/document-dashboard",
+    response_model=DocumentDashboard,
+)
+def get_document_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return document_dashboard_service.get_dashboard(
+        db=db,
+        user_id=current_user.id,
+    )
