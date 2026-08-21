@@ -319,6 +319,49 @@ class GraphQueryService:
             ]
 
     # =====================================================
+    # F5 — Documents For Entity
+    # =====================================================
+
+    def get_documents_for_entity(
+        self,
+        entity_name: str,
+    ):
+        """
+        Retrieve all documents containing a specific entity.
+
+        Graph path:
+
+            Document -> CONTAINS_ENTITY -> Entity
+        """
+
+        with neo4j_db.get_session() as session:
+
+            result = session.run(
+                """
+                MATCH (d:Document)-[:CONTAINS_ENTITY]->(e:Entity)
+
+                WHERE toLower(e.name) = toLower($entity_name)
+
+                RETURN DISTINCT
+                    d.id AS document_id,
+                    d.name AS document_name,
+                    d.category AS category
+
+                ORDER BY document_name
+                """,
+                entity_name=entity_name,
+            )
+
+            return [
+                {
+                    "document_id": record["document_id"],
+                    "document_name": record["document_name"],
+                    "category": record["category"],
+                }
+                for record in result
+            ]
+
+    # =====================================================
     # Cross-Document Relationships
     # =====================================================
 
