@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
@@ -23,6 +25,9 @@ from app.services.ner_service import (
 from app.services.relationship_extraction_service import (
     relationship_extraction_service,
 )
+from app.services.system_metric_service import (
+    system_metric_service,
+)
 
 
 # =====================================================
@@ -38,6 +43,8 @@ def create_document(
     file_size: int,
     file_path: str,
 ):
+    processing_start = time.perf_counter()
+
     extracted_text = (
         document_extraction_service.extract_text(
             file_path
@@ -123,6 +130,8 @@ def create_document(
     # Generate Embeddings
     # =================================================
 
+    embedding_start = time.perf_counter()
+
     for index, chunk in enumerate(chunks):
 
         embedding = generate_embedding(
@@ -138,7 +147,33 @@ def create_document(
 
         db.add(document_chunk)
 
+    embedding_time = (
+        time.perf_counter() - embedding_start
+    ) * 1000
+
     db.commit()
+
+    # =================================================
+    # Performance Metrics
+    # =================================================
+
+    processing_time = (
+        time.perf_counter() - processing_start
+    ) * 1000
+
+    system_metric_service.log(
+        db=db,
+        metric_name="document_processing_time",
+        metric_value=processing_time,
+        unit="ms",
+    )
+
+    system_metric_service.log(
+        db=db,
+        metric_name="document_embedding_time",
+        metric_value=embedding_time,
+        unit="ms",
+    )
 
     return document
 
