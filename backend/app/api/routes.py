@@ -8,6 +8,11 @@ from fastapi import (
     status,
 )
 
+
+from ..services.document_usage_service import (
+    document_usage_service,
+)
+
 from ..schemas.retrieval_analytics import (
     RetrievalAnalyticsResponse,
 )
@@ -1425,7 +1430,7 @@ def get_document_usage(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return document_dashboard_service.get_dashboard(
+    return document_usage_service.get_usage_statistics(
         db=db,
         user_id=current_user.id,
     )
