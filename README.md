@@ -1105,7 +1105,7 @@ Google Gemini API
 
 These technologies provide the foundation for building a scalable, production-grade AI Personal Memory & Decision Assistant.
 
-📌 Current Project Status
+📌 Current Project Statuss
 Phase 1  → Project Setup                         ✅
 Phase 2  → Backend & Authentication              ✅
 Phase 3  → Memory Engine                         ✅
