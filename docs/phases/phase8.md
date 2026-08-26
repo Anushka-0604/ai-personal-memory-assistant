@@ -2048,7 +2048,8 @@ Phase 8 establishes the foundation for the next stages of the project, including
 * Whisper Integration
 * Image Understanding
 * Multimodal Embeddings
-* Cross-Modal Retrieval
+* Cross-Modal
+ Retrieval
 * Decision Engine
 * Personalized Recommendations
 * Context-Aware Planning
