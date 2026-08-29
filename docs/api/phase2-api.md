@@ -10,7 +10,7 @@ Returns backend status.
 
 ### POST /register
 
-Registers a user.
+Registers a useer.
 
 Request:
 
