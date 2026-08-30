@@ -3,8 +3,7 @@
 ## Overview
 
 Phase 3 introduces the Memory Engine of the AI Personal Memory & Decision Assistant.
-a
-
+d
 Users can securely create, retrieve, update, and delete their personal memories.
 
 All Memory APIs are protected using JWT Authentication through OAuth2PasswordBearer.
