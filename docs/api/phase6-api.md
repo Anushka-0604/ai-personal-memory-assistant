@@ -6,7 +6,7 @@ Phase 6 introduced a complete conversational layer to the AI Personal Memory & D
 
 # 1. Create Chat Session
 
-## Endpoint
+## Endpoint ok
 
 POST /chat/sessions
 
