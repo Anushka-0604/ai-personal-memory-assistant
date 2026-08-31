@@ -9,4 +9,4 @@ result = extractor.extract(
     """
 )
 
-print(resultt)
+print(result)
