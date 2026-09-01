@@ -1,6 +1,6 @@
 from app.services.entity_extractor import EntityExtractor
 
-extractor = EntityyyyyExtractor()
+extractor = EntityyyyExtractor()
 
 result = extractor.extract(
     """
