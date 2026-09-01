@@ -18,3 +18,7 @@ for node in graph.nodes:
 print("\nEdges:")
 for edge in graph.edges:
     print(edge)
+
+
+    #omg wow
+    
