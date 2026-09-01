@@ -3,7 +3,7 @@ from app.services.graph_builder import GraphBuilder
 
 builder = GraphBuilder()
 
-extracction = MemoryExtraction(
+extraction = MemoryExtraction(
     people=["Alice"],
     organizations=["Microsoft"],
     locations=["Bangalore"],
