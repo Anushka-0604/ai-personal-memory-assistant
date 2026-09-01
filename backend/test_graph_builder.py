@@ -20,5 +20,4 @@ for edge in graph.edges:
     print(edge)
 
 
-    #omg wow
-    
+  
