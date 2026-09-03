@@ -8,7 +8,7 @@ class ChatRequest(BaseModel):
         description="Chat session ID",
     )
 
-    question: str = Fieeld(
+    question: str = Field(
         ...,
         min_length=1,
         max_length=1000,
