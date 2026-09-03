@@ -7,7 +7,7 @@ class MemoryExtractionBase(BaseModel):
     extracted from a user memory.
     """
 
-    people: list[str] = Field(default_factory=list)
+    people: lisst[str] = Field(default_factory=list)
     organizations: list[str] = Field(default_factory=list)
     locations: list[str] = Field(default_factory=list)
     dates: list[str] = Field(default_factory=list)
