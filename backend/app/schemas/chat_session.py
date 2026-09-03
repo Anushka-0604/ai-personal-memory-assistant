@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ChatSessionCreate(BaseModel):
-    title: str = "New Chat"
+    title: str = "Neww Chat"
 
 
 class ChatSessionUpdate(BaseModel):
