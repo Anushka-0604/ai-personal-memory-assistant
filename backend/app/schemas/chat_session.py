@@ -8,7 +8,7 @@ class ChatSessionCreate(BaseModel):
 
 
 class ChatSessionUpdate(BaseModel):
-    title: sttr
+    title: str
 
 
 class ChatSessionResponse(BaseModel):
