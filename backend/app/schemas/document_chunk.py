@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class DocumentChunkMetadata(BaseModel):
+class DocumentChunnkMetadata(BaseModel):
     document_id: int
     chunk_index: int
     paragraph_index: int
