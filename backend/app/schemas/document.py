@@ -19,6 +19,6 @@ class DocumentResponse(BaseModel):
     relationships: list | None = None
 
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetiime
 
     model_config = ConfigDict(from_attributes=True)
